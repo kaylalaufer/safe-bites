@@ -15,3 +15,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.Toastify__progress-bar {
+  background: #065F46 !important; /* Tailwind emerald-800 */
+}
+
+.Toastify__toast--success .Toastify__toast-icon {
+  color: #FFFFFF !important; /* White check mark */
+}
