@@ -3,8 +3,8 @@ const router = express.Router();
 
 // Example posts data
 const posts = [
-    { id: 1, user: 'Chris', restaurant: 'Donut Pub', location: 'New York', allergens: ['Peanuts'], review: 'Amazing experience!' },
-    { id: 2, user: 'Alex', restaurant: 'Green Plate', location: 'San Francisco', allergens: ['Dairy'], review: 'Great for dairy allergies!' },
+    { id: 1, user: 'Chris', restaurant: 'Donut Pub', location: 'New York', allergens: ['Peanuts'], restrictions: [], review: 'Amazing experience!' },
+    { id: 2, user: 'Alex', restaurant: 'Green Plate', location: 'San Francisco', allergens: ['Dairy'], restrictions: [], review: 'Great for dairy allergies!' },
 ];
 
 // GET all posts
@@ -18,6 +18,7 @@ router.post('/', (req, res) => {
     const newPost = {
         ...req.body,
         allergens: req.body.allergens || [], // Default to an empty array
+        restrictions: req.body.restrictions || [],
     };
 
     // THIS WILL NEED TO BE UPDATED LATER
