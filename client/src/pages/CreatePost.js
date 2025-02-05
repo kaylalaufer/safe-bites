@@ -8,6 +8,7 @@ function CreatePost() {
         restaurant: '',
         location: '',
         allergens: [],
+        restrictions: [],
         user: '',
         review: '',
         rating: '',
@@ -42,6 +43,7 @@ function CreatePost() {
                 restaurant: '',
                 location: '',
                 allergens: [],
+                restrictions: [],
                 user: '',
                 review: '',
                 rating: '',
@@ -75,6 +77,14 @@ function CreatePost() {
         'Sesame',
     ];
 
+    const availableRestrictions = [
+        'Gluten-Free',
+        'Vegan',
+        'Vegetarian',
+        'Pescatarian',
+        'Kosher',
+    ];
+
     // Handle tag selection
     const handleTagClick = (allergen) => {
         setFormData((prevData) => {
@@ -94,7 +104,24 @@ function CreatePost() {
         });
     };
 
-    // UPDATE ALLERGEN TAGS BELOW
+    // Handle tag selection
+    const handleRestrictionClick = (restriction) => {
+        setFormData((prevData) => {
+            if (prevData.restrictions.includes(restriction)) {
+                // Remove restriction if it's already selected
+                return {
+                    ...prevData,
+                    restrictions: prevData.restrictions.filter((item) => item !== restriction),
+                };
+            } else {
+                // Add restriction if it's not selected
+                return {
+                    ...prevData,
+                    restrictions: [...prevData.restrictions, restriction],
+                };
+            }
+        });
+    };
 
     return (
         <div className='p-6'>
@@ -140,8 +167,8 @@ function CreatePost() {
                                 onClick={() => handleTagClick(allergen)}
                                 className={`px-3 py-1 rounded-full border ${
                                     formData.allergens.includes(allergen)
-                                        ? 'bg-emerald-800 text-white'
-                                        : 'bg-gray-200 text-gray-800'
+                                        ? 'bg-emerald-800 text-white border-emerald-800'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                 }`}
                             >
                                 {allergen}
@@ -150,6 +177,30 @@ function CreatePost() {
                     </div>
                     <p className='text-sm text-gray-500 mt-2'>
                         Click on allergens to select or deselect them.
+                    </p>
+                </div>
+
+                {/* Restriction Tags */} 
+                <div>
+                    <label className='block font-bold mb-2'>Restrictions *</label>
+                    <div className='flex flex-wrap gap-2'>
+                        {availableRestrictions.map((restriction) => (
+                            <button
+                                type='button'
+                                key={restriction}
+                                onClick={() => handleRestrictionClick(restriction)}
+                                className={`px-3 py-1 rounded-full border ${
+                                    formData.restrictions.includes(restriction)
+                                        ? 'bg-emerald-800 text-white border-emerald-800'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                {restriction}
+                            </button>
+                        ))}
+                    </div>
+                    <p className='text-sm text-gray-500 mt-2'>
+                        Click on restrictions to select or deselect them.
                     </p>
                 </div>
 
