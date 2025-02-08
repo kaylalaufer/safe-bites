@@ -9,6 +9,7 @@ function CreatePost() {
         location: '',
         allergens: [],
         restrictions: [],
+        positive: true,
         user: '',
         review: '',
         rating: '',
@@ -44,6 +45,7 @@ function CreatePost() {
                 location: '',
                 allergens: [],
                 restrictions: [],
+                positive: true,
                 user: '',
                 review: '',
                 rating: '',
@@ -203,6 +205,48 @@ function CreatePost() {
                         Click on restrictions to select or deselect them.
                     </p>
                 </div>
+
+                {/* Experience Type */}
+                <div className="mb-4">
+                    <label className="block font-medium mb-2">
+                        How allergy-friendly was this restaurant?
+                    </label>
+                    <div className="flex gap-4">
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="radio"
+                                name="safety"
+                                value="safe"
+                                checked={formData.safety === 'safe'}
+                                onChange={() => setFormData({ ...formData, safety: 'safe' })}
+                            />
+                            ✅ Safe & Allergy-Friendly
+                        </label>
+
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="radio"
+                                name="safety"
+                                value="caution"
+                                checked={formData.safety === 'caution'}
+                                onChange={() => setFormData({ ...formData, safety: 'caution' })}
+                            />
+                            🟡 Accommodating, but some risk
+                        </label>
+
+                        <label className="flex items-center gap-2">
+                            <input
+                                type="radio"
+                                name="safety"
+                                value="unsafe"
+                                checked={formData.safety === 'unsafe'}
+                                onChange={() => setFormData({ ...formData, safety: 'unsafe' })}
+                            />
+                            ❌ Unsafe for my allergy
+                        </label>
+                    </div>
+                </div>
+
 
                 {/* Review (Optional) */}
                 <div>
