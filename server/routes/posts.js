@@ -14,17 +14,30 @@ router.get('/', (req, res) => {
 
 // POST a new post
 router.post('/', (req, res) => {
-    // Retrieve the data from the request body
+    const { user, restaurant, location, allergens, restrictions, safety, review } = req.body;
+
+    // Validation: Require user, restaurant, and location
+    if (!user || !restaurant || !location) {
+        return res.status(400).json({ error: 'User, restaurant, and location are required.' });
+    }
+
+    // Ensure safety is either "safe", "caution", "unsafe", or default to "not provided"
+    const validSafetyOptions = ["safe", "caution", "unsafe"];
+    const safetyCategory = validSafetyOptions.includes(safety) ? safety : "not provided";
+
+    // Create a new post object
     const newPost = {
-        ...req.body,
-        allergens: req.body.allergens || [], // Default to an empty array
-        restrictions: req.body.restrictions || [],
+        id: posts.length + 1, // Assign unique ID (temporary, will use DB later)
+        user,
+        restaurant,
+        location,
+        allergens: allergens || [], // Default empty array
+        restrictions: restrictions || [],
+        safety: safetyCategory, // Ensures safety falls within valid categories
+        review: review || "",
     };
 
-    // THIS WILL NEED TO BE UPDATED LATER
-    newPost.id = posts.length + 1; // Assign a unique ID
-
-    posts.push(newPost); // Add the new post to the in-memory storage
+    posts.push(newPost); // Add to in-memory posts array
     res.status(201).json(newPost); // Respond with the created post
 });
 

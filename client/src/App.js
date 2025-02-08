@@ -4,6 +4,7 @@ import Explore from './pages/Explore';
 import CreatePost from './pages/CreatePost';
 
 function App() {
+  console.log("Google Maps API Key:", process.env.REACT_APP_GOOGLE_MAPS_API_KEY); // Debug here
     return (
         <Router>
             <div className="bg-gray-100 min-h-screen">
