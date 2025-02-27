@@ -1633,10 +1633,10 @@
     schema-utils "^4.2.0"
     source-map "^0.7.3"
 
-"@react-google-maps/api@^2.20.5":
-  version "2.20.5"
-  resolved "https://registry.yarnpkg.com/@react-google-maps/api/-/api-2.20.5.tgz#f7cea7425a2c2fb3317e6113a94b854ae01293bc"
-  integrity sha512-Dx3faV4d7JXFSD7SB8ePIt5LOB72mNGHKFp/hIQVaPEsLJlEi4ID+XL6HM3Xw10AzGbr4KS/eQSi3OAaN7YttQ==
+"@react-google-maps/api@^2.20.6":
+  version "2.20.6"
+  resolved "https://registry.yarnpkg.com/@react-google-maps/api/-/api-2.20.6.tgz#8463a4db10dd2764b14da4bfe942a584693eb4b3"
+  integrity sha512-frxkSHWbd36ayyxrEVopSCDSgJUT1tVKXvQld2IyzU3UnDuqqNA3AZE4/fCdqQb2/zBQx3nrWnZB1wBXDcrjcw==
   dependencies:
     "@googlemaps/js-api-loader" "1.16.8"
     "@googlemaps/markerclusterer" "2.5.3"

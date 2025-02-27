@@ -1,4 +1,4 @@
-const express = require('express');
+import express from "express";
 const router = express.Router();
 
 // Example posts data
@@ -41,4 +41,4 @@ router.post('/', (req, res) => {
     res.status(201).json(newPost); // Respond with the created post
 });
 
-module.exports = router;
+export default router;
