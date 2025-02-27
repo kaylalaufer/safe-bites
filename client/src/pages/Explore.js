@@ -1,77 +1,42 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { fetchPosts } from '../utils/api';
-import debounce from 'lodash.debounce';
-import Map from "../components/Map";
+/*import React, { useState, useEffect } from "react";
+import MapComponent from "../components/MAP/MapComponent";
 
-function Explore() {
-    const [posts, setPosts] = useState([]); // State to store all posts
-    const [loading, setLoading] = useState(true); // Loading state
-    const [filteredPosts, setFilterPosts] = useState([]); // State to store filtered posts
-    const [searchTerm, setSearchTerm] = useState(''); // For search input
-    const [selectedAllergens, setSelectedAllergens] = useState([]); // For allergen filter
+const Explore = () => {
+  const [showMap, setShowMap] = useState(true);
 
-    useEffect(() => {
-        // Fetch posts from the backend
-        const loadPosts = async () => {
-            try {
-                const response = await fetchPosts();
-                setPosts(response.data); // Update state with fetched posts
-                setFilterPosts(response.data); // Initially show all posts
-            } catch (error) {
-                console.error('Error fetching posts:', error);
-            } finally {
-                setLoading(false); // Stop loading
-            }
-        };
-        loadPosts();
-    }, []);
+  useEffect(() => {
+    setShowMap(true); // Ensure map stays mounted
+  }, []);
 
-    // Debounced Search Handler
-    const debounceSearch = useMemo(
-        () =>
-            debounce((value) => {
-                const filtered = posts.filter((post) => {
-                    const matchesSearch = 
-                        post.restaurant.toLowerCase().includes(value.toLowerCase()) ||
-                        post.location.toLowerCase().includes(value.toLowerCase()) ||
-                        post.review.toLowerCase().includes(value.toLowerCase());
-                    const matchesAllergens =
-                        selectedAllergens.length === 0 ||
-                        selectedAllergens.every((allergen) =>
-                            post.allergens.includes(allergen)
-                        );
-                    return matchesSearch && matchesAllergens;
-                });
-                setFilterPosts(filtered);
-            }, 900),
-        [posts, selectedAllergens]
-    );
+  return (
+    <div>
+      <h1>Explore Allergy-Friendly Places</h1>
+      {showMap && <MapComponent />}
+    </div>
+  );
+};
 
-    // ***
-    // Trigger debounced search on searchTerm change
-    useEffect(() => {
-        debounceSearch(searchTerm);
-        return () => debounceSearch.cancel();
-    }, [searchTerm, debounceSearch]);
+export default Explore;*/
 
-    const handleAllergenToggle = (allergen) => {
-        setSelectedAllergens((prev) =>
-            prev.includes(allergen)
-            ? prev.filter((item) => item !== allergen)
-            : [...prev, allergen]
-        );
+import React, { useState } from "react";
+import MapComponent from "../components/MapComponent";
+import SearchBox from "../components/SearchBox";
+
+const Explore = () => {
+    const [markers, setMarkers] = useState([]);
+
+    // Handle adding new restaurant locations to the map
+    const handleSelect = (location) => {
+        setMarkers([...markers, location]);
     };
 
-    if (loading) {
-        return <p className='text-center text-gray-500'>Loading posts...</p>;
-    }
-
     return (
-        <div>
-            <h1 className="text-2xl font-bold mb-4">Explore Allergy-Friendly Places</h1>
-            <Map />
+        <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">Explore Allergy-Friendly Restaurants</h2>
+            <SearchBox onSelect={handleSelect} />
+            <MapComponent markers={markers} />
         </div>
-    );   
-}
+    );
+};
 
 export default Explore;
