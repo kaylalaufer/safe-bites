@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors"
 const app = express();
 import fetch from "node-fetch";
+import restaurantRoutes from './routes/restaurants.js';
 
 const GOOGLE_API_KEY = "AIzaSyBJBUdkvdz0P0TlU8z2QCona8e2i0U6l-o";
 
@@ -12,6 +13,9 @@ app.use(express.json());
 // Import posts route
 import postsRoutes from './routes/posts.js';
 app.use('/api/posts', postsRoutes);
+
+// Restaurant route
+app.use('/api/restaurants', restaurantRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
