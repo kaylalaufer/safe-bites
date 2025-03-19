@@ -30,7 +30,7 @@ export const getRestaurantsByLocation = async (req, res) => {
 
         const querySnapshot = await getDocs(q);
         let restaurants = [];
-        //console.log("Query Snapshot:", querySnapshot);
+
         querySnapshot.forEach((doc) => {
             console.log("HERE");
             let data = doc.data();

@@ -4,7 +4,7 @@ const app = express();
 import fetch from "node-fetch";
 import restaurantRoutes from './routes/restaurants.js';
 
-const GOOGLE_API_KEY = "AIzaSyBJBUdkvdz0P0TlU8z2QCona8e2i0U6l-o";
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
 // Middleware
 app.use(cors());

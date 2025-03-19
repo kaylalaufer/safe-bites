@@ -10,7 +10,7 @@ const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Cafe", "Fast Food", "Diner", "
 // Temporary Restaurant Data (To Be Replaced with Database)
 const RESTAURANTS = [
   { id: 1, name: "Joe's Diner", location: "New York, NY", allergens: ["Peanuts", "Gluten"], type: "Diner", safe: 10, accommodating: 5, unsafe: 2 },
-  { id: 2, name: "Green Bites", location: "Brooklyn, NY", allergens: ["Tree Nut", "Vegan"], type: "Vegan", safe: 15, accommodating: 3, unsafe: 1 },
+  { id: 2, name: "Green Bites", location: "Brooklyn, NY", allergens: ["Tree Nut", "Milk"], type: "Vegan", safe: 15, accommodating: 3, unsafe: 1 },
   { id: 3, name: "Safe Eats", location: "Queens, NY", allergens: ["Dairy", "Gluten"], type: "Cafe", safe: 7, accommodating: 8, unsafe: 0 },
   { id: 4, name: "Donut Pub", location: "New York, NY", allergens: ["Peanuts", "Tree Nuts"], type: "Bakery", safe: 10, accommodating: 2, unsafe: 2 },
   { id: 5, name: "A la Mode", location: "New York, NY", allergens: ["Tree Nut", "Peanuts"], type: "Ice Cream", safe: 11, accommodating: 3, unsafe: 1 },
@@ -72,8 +72,8 @@ const Explore = () => {
                         <select 
                             className="w-full p-2 border rounded-md mt-1" 
                             onChange={handleAllergenSelect} 
-                            value=""
-                        >
+                            value="">
+
                             <option value="" disabled>Select an allergen</option>
                             {ALLERGENS.map((allergen) => (
                                 <option key={allergen} value={allergen}>{allergen}</option>
@@ -86,8 +86,7 @@ const Explore = () => {
                                 <div 
                                     key={allergen} 
                                     className="bg-pink-100 text-emerald-600 px-3 py-1 rounded-full flex items-center cursor-pointer hover:bg-pink-200"
-                                    onClick={() => removeAllergen(allergen)}
-                                >
+                                    onClick={() => removeAllergen(allergen)}>
                                     {allergen} ✕
                                 </div>
                             ))}
@@ -100,8 +99,8 @@ const Explore = () => {
                         <select 
                             className="w-full p-2 border rounded-md mt-1" 
                             onChange={(e) => setSelectedType(e.target.value)} 
-                            value={selectedType}
-                        >
+                            value={selectedType}>
+
                             <option value="">All Types</option>
                             {RESTAURANT_TYPES.map((type) => (
                                 <option key={type} value={type}>{type}</option>
@@ -110,7 +109,6 @@ const Explore = () => {
                     </div>
 
                     {/* Filtered Restaurant Listings */}
-                    
                     {filteredRestaurants.length > 0 ? (
                         <div className="space-y-4">
                             {filteredRestaurants.map((restaurant) => (

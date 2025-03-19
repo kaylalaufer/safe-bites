@@ -84,13 +84,13 @@ function CreatePost() {
 
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">
-        {/* Centered Title Above the Card */}
-        <h1 className="text-3xl font-bold text-pink-900 mb-4 text-center">Post a Review</h1>
+            {/* Centered Title Above the Card */}
+            <h1 className="text-3xl font-bold text-pink-900 mb-4 text-center">Post a Review</h1>
 
-        {/* Form Container */}
-        <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
-            <ToastContainer />
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Form Container */}
+            <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
+                <ToastContainer />
+                <form onSubmit={handleSubmit} className="space-y-7">
 
                 {/* Restaurant Search with Google Maps Autocomplete */}
                 <div>
@@ -148,7 +148,7 @@ function CreatePost() {
                                 required
                             />
                             ✅ Safe
-                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 p-2 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 No cross-contamination, restaurant fully understands allergies.
                             </span>
                         </label>
@@ -164,7 +164,7 @@ function CreatePost() {
                                 required
                             />
                             🟡 Accommodating
-                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 p-2 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 Staff was aware but some minor risks (e.g., shared kitchen).
                             </span>
                         </label>
@@ -180,7 +180,7 @@ function CreatePost() {
                                 required
                             />
                             ❌ Unsafe
-                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 p-2 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <span className="absolute left-0 top-8 w-48 text-xs text-gray-700 bg-gray-100 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 Restaurant was not allergy-friendly, high risk of contamination.
                             </span>
                         </label>
