@@ -14,7 +14,7 @@
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 ### Explore Allergy-Friendly Restaurants
 ![Explore Page](./assets/Explore.png)
@@ -39,7 +39,7 @@
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 Follow these steps to set up and run Safe Bites on your local machine (Note front and backend are not fully connected yet).
 
@@ -57,19 +57,19 @@ yarn install  # or npm install
 ### **3️⃣ Set Up Environment Variables**
 Create a .env file in the root of your project and add:
 
-# Firebase Authentication
+**Firebase Authentication**
 ```sh
 REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
 REACT_APP_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
 REACT_APP_FIREBASE_PROJECT_ID=your_firebase_project_id
 ```
-# Supabase (PostgreSQL Database)
+**Supabase (PostgreSQL Database)**
 ```sh
 SUPABASE_URL=https://your_project.supabase.co
 SUPABASE_KEY=your_supabase_secret_key
 ```
 
-# Google Maps API - Needed for frontend
+**Google Maps API - Needed for frontend**
 ```sh
 REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
