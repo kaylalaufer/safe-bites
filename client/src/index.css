@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+/*body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -17,9 +17,10 @@ code {
 }
 
 .Toastify__progress-bar {
-  background: #065F46 !important; /* Tailwind emerald-800 */
+  background: #065F46 !important; 
 }
-
+/* Tailwind emerald-800 */
+/*
 .Toastify__toast--success .Toastify__toast-icon {
-  color: #FFFFFF !important; /* White check mark */
-}
+  color: #FFFFFF !important; 
+}*/ /* White check mark */
