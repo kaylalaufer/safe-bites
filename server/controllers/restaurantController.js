@@ -59,7 +59,7 @@ export const getRestaurantsByLocation = async (req, res) => {
 
         res.json(restaurants);
     } catch (error) {
-        console.error("🔥 Error fetching restaurants by location:", error);
+        console.error("Error fetching restaurants by location:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
