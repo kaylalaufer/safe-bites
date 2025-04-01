@@ -9,19 +9,19 @@ const RestaurantCard = ({ restaurant }) => {
 
             {/* Allergen Info */}
             <p className="text-sm text-gray-700">
-                <strong>Allergens:</strong> {restaurant.allergens.join(", ")}
+                <strong>Allergens:</strong> {(restaurant.associated_allergens || []).join(", ")}
             </p>
 
             {/* Safety Ratings (Safe / Accommodating / Unsafe Votes) */}
             <div className="flex items-center gap-4 mt-3">
                 <div className="text-green-600 font-semibold flex items-center">
-                    🟢 Safe: {restaurant.safe}
+                    🟢 Safe: {restaurant.safe_count ?? 0}
                 </div>
                 <div className="text-yellow-600 font-semibold flex items-center">
-                    🟡 Accommodating: {restaurant.accommodating}
+                    🟡 Accommodating: {restaurant.accommodating_count ?? 0}
                 </div>
                 <div className="text-red-600 font-semibold flex items-center">
-                    🔴 Unsafe: {restaurant.unsafe}
+                    🔴 Unsafe: {restaurant.unsafe_count ?? 0}
                 </div>
             </div>
         </div>

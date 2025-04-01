@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { createPost } from "../utils/api";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { Autocomplete } from "@react-google-maps/api";
 
 function CreatePost() {
@@ -15,6 +14,8 @@ function CreatePost() {
         user: "",
         review: "",
     });
+
+    const isGuest = sessionStorage.getItem("isGuest") === "true";
 
     const [autocomplete, setAutocomplete] = useState(null);
 
@@ -42,18 +43,7 @@ function CreatePost() {
         try {
             const response = await createPost(formData);
             console.log("Post created:", response.data);
-            toast.success("Post Created! 🥳", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-                progressStyle: {
-                    background: "#065F46",
-                },
-            });
+            toast.success("Post Created! 🥳");
 
             setFormData({
                 restaurant: "",
@@ -67,18 +57,7 @@ function CreatePost() {
             });
         } catch (error) {
             console.error("⚠️ Error creating post: ", error);
-            toast.error("Error creating post. Please try again.", {
-                position: "top-right",
-                autoClose: 3000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                theme: "light",
-                progressStyle: {
-                    background: "#065F46",
-                },
-            });
+            toast.error("Error creating post. Please try again.");
         }
     };
 
@@ -89,7 +68,7 @@ function CreatePost() {
 
             {/* Form Container */}
             <div className="bg-white shadow-lg rounded-lg p-8 max-w-lg w-full">
-                <ToastContainer />
+                
                 <form onSubmit={handleSubmit} className="space-y-7">
 
                 {/* Restaurant Search with Google Maps Autocomplete */}
@@ -201,12 +180,27 @@ function CreatePost() {
                 </div>
 
                 {/* Submit Button */}
-                <button
-                    type="submit"
-                    className="w-full bg-pink-900 text-white p-3 rounded-lg hover:bg-pink-700 transition"
-                >
-                    Share Post!
-                </button>
+                {isGuest ? (
+                    <div
+                        onClick={() => toast.info("Please log in to post a review.")}
+                        className="w-full"
+                    >
+                        <button
+                            type="button"
+                            className="w-full p-3 rounded text-white bg-gray-400 cursor-not-allowed"
+                            >
+                            Share Post!
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        type="submit"
+                        className="w-full p-3 rounded text-white bg-pink-600 hover:bg-pink-700 transition"
+                    >
+                        Share Post!
+                    </button>
+                )}
+
             </form>
         </div>
     </div>

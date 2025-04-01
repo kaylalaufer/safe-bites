@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "../supabaseClient";
 import MapComponent from "../components/MapComponent";
 import SearchBox from "../components/SearchBox";
 import RestaurantCard from "../components/RestaurantCard";
@@ -6,40 +7,50 @@ import RestaurantCard from "../components/RestaurantCard";
 const ALLERGENS = ["Peanuts", "Tree Nuts", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
 const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
 
-
-// Temporary Restaurant Data (To Be Replaced with Database)
-const RESTAURANTS = [
-  { id: 1, name: "Joe's Diner", location: "New York, NY", allergens: ["Peanuts", "Gluten"], type: "Diner", safe: 10, accommodating: 5, unsafe: 2 },
-  { id: 2, name: "Green Bites", location: "Brooklyn, NY", allergens: ["Tree Nut", "Milk"], type: "Vegan", safe: 15, accommodating: 3, unsafe: 1 },
-  { id: 3, name: "Safe Eats", location: "Queens, NY", allergens: ["Dairy", "Gluten"], type: "Cafe", safe: 7, accommodating: 8, unsafe: 0 },
-  { id: 4, name: "Donut Pub", location: "New York, NY", allergens: ["Peanuts", "Tree Nuts"], type: "Bakery", safe: 10, accommodating: 2, unsafe: 2 },
-  { id: 5, name: "A la Mode", location: "New York, NY", allergens: ["Tree Nut", "Peanuts"], type: "Ice Cream", safe: 11, accommodating: 3, unsafe: 1 },
-  { id: 6, name: "Pasta Louisa", location: "Brooklyn, NY", allergens: ["Dairy", "Gluten", "Peanuts"], type: "Italian", safe: 7, accommodating: 10, unsafe: 0 },
-];
-
 const Explore = () => {
     const [markers, setMarkers] = useState([]);
     const [selectedAllergens, setSelectedAllergens] = useState([]);
     const [selectedType, setSelectedType] = useState("");
-
+    const [restaurants, setRestaurants] = useState([]);
+  
+    // Fetch restaurants from Supabase
+    useEffect(() => {
+      const fetchRestaurants = async () => {
+        const { data, error } = await supabase.from("restaurants").select("*");
+        if (error) {
+          console.error("Error fetching restaurants:", error.message);
+        } else {
+          setRestaurants(data);
+        }
+      };
+  
+      fetchRestaurants();
+    }, []);
+  
     // Handle selecting allergens (add/remove)
     const handleAllergenSelect = (e) => {
-        const allergen = e.target.value;
-        if (!selectedAllergens.includes(allergen)) {
-            setSelectedAllergens([...selectedAllergens, allergen]);
-        }
+      const allergen = e.target.value;
+      if (!selectedAllergens.includes(allergen)) {
+        setSelectedAllergens([...selectedAllergens, allergen]);
+      }
     };
-
-    // Handle removing an allergen
+  
     const removeAllergen = (allergen) => {
-        setSelectedAllergens(selectedAllergens.filter((item) => item !== allergen));
+      setSelectedAllergens(selectedAllergens.filter((item) => item !== allergen));
     };
-
+  
     // Filter restaurants based on selected allergens & type
-    const filteredRestaurants = RESTAURANTS.filter((restaurant) => {
+    const filteredRestaurants = restaurants.filter((restaurant) => {
+      const allergens = restaurant.associated_allergens || [];
+      const type = restaurant.place_type || "";
+  
       const matchesAllergens =
-          selectedAllergens.length === 0 || selectedAllergens.every((allergen) => restaurant.allergens.includes(allergen));
-      const matchesType = selectedType === "" || restaurant.type === selectedType;
+        selectedAllergens.length === 0 ||
+        selectedAllergens.every((allergen) => allergens.includes(allergen));
+  
+      const matchesType =
+        selectedType === "" || type === selectedType;
+  
       return matchesAllergens && matchesType;
     });
 
