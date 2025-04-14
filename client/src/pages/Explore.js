@@ -4,7 +4,7 @@ import MapComponent from "../components/MapComponent";
 import SearchBox from "../components/SearchBox";
 import RestaurantCard from "../components/RestaurantCard";
 
-const ALLERGENS = ["Peanuts", "Tree Nuts", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
+const ALLERGENS = ["Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
 const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
 
 const Explore = () => {
@@ -15,17 +15,35 @@ const Explore = () => {
   
     // Fetch restaurants from Supabase
     useEffect(() => {
-      const fetchRestaurants = async () => {
-        const { data, error } = await supabase.from("restaurants").select("*");
-        if (error) {
-          console.error("Error fetching restaurants:", error.message);
-        } else {
-          setRestaurants(data);
-        }
-      };
-  
-      fetchRestaurants();
-    }, []);
+        const fetchRestaurants = async () => {
+          const { data, error } = await supabase
+          .from("restaurants")
+          .select("id, name, location, lat, lng, place_type, associated_allergens, safe_count, accommodating_count, unsafe_count");
+        
+      
+          if (error) {
+            console.error("Error fetching restaurants:", error.message);
+          } else {
+            // Filter out any without coordinates
+            const validMarkers = data
+              .filter((r) => r.lat && r.lng)
+              .map((r) => ({
+                id: r.id,
+                name: r.name,
+                location: r.location,
+                lat: r.lat,
+                lng: r.lng,
+                place_type: r.place_type,
+              }));
+      
+            setMarkers(validMarkers);       // for your <MapComponent />
+            setRestaurants(data);           // for your listing/filtering UI
+          }
+        };
+      
+        fetchRestaurants();
+      }, []);
+      
   
     // Handle selecting allergens (add/remove)
     const handleAllergenSelect = (e) => {

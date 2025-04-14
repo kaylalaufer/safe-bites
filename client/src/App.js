@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import ProfileSetup from "./pages/ProfileSetup";
 import AuthWrapper from "./components/AuthWrapper";
 import TestDataInsert from "./components/TestDataInsert";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
 const GOOGLE_MAPS_LIBRARIES = ["places"];
 
@@ -51,39 +53,8 @@ function App() {
   return (
     <Router>
       <ToastContainer position="top-center" autoClose={4000} />
-      <div className="bg-gray-100 min-h-screen">
-        <nav className="bg-white shadow-md p-4">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <div className="flex gap-4">
-              <Link to="/" className="text-lg font-semibold text-pink-700 hover:text-pink-900 transition">
-                Explore
-              </Link>
-              <Link to="/create" className="text-lg font-semibold text-pink-700 hover:text-pink-900 transition">
-                Create Post
-              </Link>
-            </div>
-            {user || isGuest ? (
-                isGuest ? (
-                    <button
-                    onClick={() => {
-                        sessionStorage.removeItem("isGuest");
-                        window.location.href = "/login";
-                    }}
-                    className="text-sm bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700"
-                    >
-                    Log In / Sign Up
-                    </button>
-                ) : (
-                    <button
-                    onClick={handleLogout}
-                    className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                    >
-                    Logout
-                    </button>
-                )
-                ) : null}
-          </div>
-        </nav>
+      <div className="bg-gray-100 min-h-screen flex flex-col">
+       <Header user={user} isGuest={isGuest} handleLogout={handleLogout} />  
 
         <main className="max-w-4xl mx-auto p-4">
           <Routes>
@@ -115,6 +86,7 @@ function App() {
             
           </Routes>
         </main>
+        <Footer />
       </div>
     </Router>
   );

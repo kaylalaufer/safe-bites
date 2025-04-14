@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { createPost } from "../utils/api";
+//import { createPost } from "../utils/api";
 import { toast } from "react-toastify";
 import { Autocomplete } from "@react-google-maps/api";
 import { supabase } from "../supabaseClient";
@@ -9,12 +9,15 @@ function CreatePost() {
     restaurant: "",
     location: "",
     place_type: "",
+    google_place_id: "",
     hidden_allergens: "",
     allergens: [],
-    restrictions: [],
+    //restrictions: [],
     experience: "",
     user: "",
     review: "",
+    lat: null,
+    lng: null,
   });
 
   const isGuest = sessionStorage.getItem("isGuest") === "true";
@@ -34,32 +37,26 @@ function CreatePost() {
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-
+  
       if (!isGuest && user) {
-        const fetchProfile = async () => {
-          const { data, error } = await supabase
-            .from("users")
-            .select("username, allergens")
-            .eq("id", user.id)
-            .single();
-      
-          if (error) {
-            console.error("Error fetching profile:", error.message);
-          } else {
-            setProfile(data);
-          }
-        };
-      
-        fetchProfile();
+        const { data, error } = await supabase
+          .from("users")
+          .select("username, allergens")
+          .eq("id", user.id)
+          .single();
+  
+        if (error) {
+          console.error("Error fetching profile:", error.message);
+        } else {
+          setProfile(data);
+        }
       }
-      
     };
+  
     getUser();
-  }, []);
+  }, [isGuest]); // ✅ Add isGuest to the dependency array  
 
   const userAllergens = profile.allergens || [];
 
@@ -73,6 +70,7 @@ function CreatePost() {
         const place = autocomplete.getPlace();
         // Extract the raw Google type (e.g., "cafe", "bakery")
         const rawType = place.types?.[0] || "";
+        const placeId = place.place_id;
 
         // Map rawType to your custom list
         const typeMapping = {
@@ -85,20 +83,33 @@ function CreatePost() {
         };
 
         const mappedType = typeMapping[rawType] || "";
+
+        // 📍 Get lat/lng from place geometry
+        const lat = place.geometry?.location?.lat();
+        const lng = place.geometry?.location?.lng();
+
         setFormData({
             ...formData,
             restaurant: place.name || "",
             location: place.formatted_address || "",
             place_type: mappedType,
+            google_place_id: placeId || "",
+            lat,
+            lng,
         });
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    if (!user || isGuest) {
+      toast.error("You must be logged in to post a review.");
+      return;
+    }
+  
+    // Build allergen_feedback array
     let allergen_feedback = [];
-
     if (
       formData.experience === "safe" ||
       allAllergensAffected === "yes" ||
@@ -113,33 +124,121 @@ function CreatePost() {
         ([allergen, category]) => ({ allergen, category })
       );
     }
-
-    const fullData = {
-      ...formData,
-      allergen_feedback,
-      user: user?.id || "",
-    };
-
+  
     try {
-      const response = await createPost(fullData);
-      console.log("Post created:", response.data);
-      toast.success("Post Created! 🎉");
+      // 1. Check if restaurant exists
+      const { data: existingRestaurant, error } = await supabase
+        .from("restaurants")
+        .select("id,hidden_allergens,associated_allergens")
+        .eq("name", formData.restaurant)
+        .eq("location", formData.location)
+        .eq("google_place_id", formData.google_place_id)
+        .maybeSingle();
 
+      if (error) {
+        console.error("Select restaurant failed:", error.message);
+        //throw error;
+      }
+  
+      let restaurantId;
+  
+      if (existingRestaurant) {
+        restaurantId = existingRestaurant.id;
+  
+        // 2. Append hidden allergens if needed
+        if (formData.hidden_allergens) {
+          const current = existingRestaurant.hidden_allergens || [];
+          if (!current.includes(formData.hidden_allergens)) {
+            await supabase
+              .from("restaurants")
+              .update({
+                hidden_allergens: [...current, formData.hidden_allergens],
+              })
+              .eq("id", restaurantId);
+          }
+        }
+  
+        // 3. Append associated allergens
+        const existingAssociated = existingRestaurant.associated_allergens || [];
+        const merged = Array.from(
+          new Set([...existingAssociated, ...profile.allergens])
+        );
+        await supabase
+          .from("restaurants")
+          .update({ associated_allergens: merged })
+          .eq("id", restaurantId);
+      } else {
+        // 4. Insert new restaurant
+        const { data: newRestaurant, error: insertError } = await supabase
+          .from("restaurants")
+          .insert([
+            {
+              name: formData.restaurant,
+              location: formData.location,
+              place_type: formData.place_type,
+              google_place_id: formData.google_place_id,
+              hidden_allergens: formData.hidden_allergens
+                ? [formData.hidden_allergens]
+                : [],
+              associated_allergens: profile.allergens,
+              lat: formData.lat,
+              lng: formData.lng,
+            },
+          ])
+          .select()
+          .single();
+  
+        if (insertError) throw insertError;
+        restaurantId = newRestaurant.id;
+      }
+  
+      // 5. Insert review
+      const { error: reviewError } = await supabase.from("reviews").insert([
+        {
+          user_id: user.id,
+          restaurant_id: restaurantId,
+          allergen_feedback,
+          review_text: formData.review,
+        },
+      ]);
+  
+      if (reviewError) throw reviewError;
+  
+      toast.success("Review posted! 🎉");
+
+      // Increment the appropriate safety count
+      const countColumn =
+      formData.experience === "safe"
+        ? "safe_count"
+        : formData.experience === "accommodating"
+        ? "accommodating_count"
+        : "unsafe_count";
+
+      await supabase.rpc("increment_restaurant_count", {
+      column_name: countColumn,
+      rest_id: restaurantId,
+      });
+
+  
+      // 6. Reset form
       setFormData({
         restaurant: "",
         location: "",
+        place_type: "",
         hidden_allergens: "",
         allergens: [],
-        restrictions: [],
+        //restrictions: [],
         experience: "",
         user: "",
         review: "",
       });
+      setAllAllergensAffected("yes");
+      setCustomAllergenFeedback({});
     } catch (error) {
-      console.error("⚠️ Error creating post: ", error);
-      toast.error("Error creating post. Please try again.");
+      console.error("❌ Error submitting review:", error);
+      toast.error("Failed to post review.");
     }
-  };
+  };  
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">

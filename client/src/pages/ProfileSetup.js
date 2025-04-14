@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 const allergenOptions = [
-  "peanut", "tree nut", "gluten", "dairy", "egg", "soy", "fish", "shellfish", "sesame"
+  "Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"
 ];
 
 const personTypes = ["adult", "parent", "college_student", "child"];
