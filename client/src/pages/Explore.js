@@ -18,14 +18,59 @@ const Explore = () => {
         const fetchRestaurants = async () => {
           const { data, error } = await supabase
           .from("restaurants")
-          .select("id, name, location, lat, lng, place_type, associated_allergens, safe_count, accommodating_count, unsafe_count");
+          .select(`
+            id,
+            name,
+            location,
+            lat,
+            lng,
+            place_type,
+            associated_allergens,
+            safe_count,
+            accommodating_count,
+            unsafe_count,
+            restaurant_allergen_summary (
+              allergen,
+              safe_count,
+              accommodating_count,
+              unsafe_count
+            )
+          `);
         
       
           if (error) {
             console.error("Error fetching restaurants:", error.message);
           } else {
+            const enrichedData = data.map((restaurant) => {
+              const allergenSummary = restaurant.restaurant_allergen_summary || [];
+            
+              const totalSafe = allergenSummary.reduce(
+                (sum, row) => sum + row.safe_count,
+                0
+              );
+              const totalAccommodating = allergenSummary.reduce(
+                (sum, row) => sum + row.accommodating_count,
+                0
+              );
+              const totalUnsafe = allergenSummary.reduce(
+                (sum, row) => sum + row.unsafe_count,
+                0
+              );
+              console.log(restaurant.name);
+              console.log(totalSafe);
+              console.log(totalAccommodating);
+              console.log(totalUnsafe);
+              return {
+                ...restaurant,
+                totalSafe,
+                totalAccommodating,
+                totalUnsafe,
+              };
+            
+            });
+            
             // Filter out any without coordinates
-            const validMarkers = data
+            const validMarkers = enrichedData
               .filter((r) => r.lat && r.lng)
               .map((r) => ({
                 id: r.id,
@@ -34,10 +79,13 @@ const Explore = () => {
                 lat: r.lat,
                 lng: r.lng,
                 place_type: r.place_type,
+                totalSafe: r.totalSafe,
+                totalAccommodating: r.totalAccommodating,
+                totalUnsafe: r.totalUnsafe,
               }));
       
             setMarkers(validMarkers);       // for your <MapComponent />
-            setRestaurants(data);           // for your listing/filtering UI
+            setRestaurants(enrichedData);           // for your listing/filtering UI
           }
         };
       

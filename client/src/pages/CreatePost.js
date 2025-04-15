@@ -207,17 +207,30 @@ function CreatePost() {
       toast.success("Review posted! 🎉");
 
       // Increment the appropriate safety count
-      const countColumn =
-      formData.experience === "safe"
-        ? "safe_count"
-        : formData.experience === "accommodating"
-        ? "accommodating_count"
-        : "unsafe_count";
-
-      await supabase.rpc("increment_restaurant_count", {
-      column_name: countColumn,
-      rest_id: restaurantId,
+      const safetyCounts = {
+        safe: 0,
+        accommodating: 0,
+        unsafe: 0,
+      };
+      
+      allergen_feedback.forEach(({ category }) => {
+        if (safetyCounts[category] !== undefined) {
+          safetyCounts[category]++;
+        }
       });
+      
+      // Update each count using Supabase RPC
+      for (const { allergen, category } of allergen_feedback) {
+        const column = `${category}_count`;
+      
+        const { data, error } = await supabase.rpc("increment_allergen_summary", {
+          rest_id: restaurantId,
+          allergen_name: allergen,
+          column_name: column,
+        });
+      
+        if (error) console.error("Error updating allergen summary:", error);
+      }      
 
   
       // 6. Reset form
@@ -227,7 +240,6 @@ function CreatePost() {
         place_type: "",
         hidden_allergens: "",
         allergens: [],
-        //restrictions: [],
         experience: "",
         user: "",
         review: "",
