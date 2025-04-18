@@ -9,26 +9,29 @@ const AuthWrapper = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const isGuest = sessionStorage.getItem("isGuest") === "true";
-
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-
-        if (error) {
-          console.warn("Supabase auth error:", error.message);
+  
+      if (!isGuest) {
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser();
+  
+          if (error) {
+            console.warn("Supabase auth error:", error.message);
+          }
+  
+          if (!user) {
+            navigate("/login");
+          }
+        } catch (e) {
+          console.error("AuthWrapper error:", e);
         }
-
-        if (!user && !isGuest) {
-          navigate("/login");
-        }
-      } catch (e) {
-        console.error("AuthWrapper error:", e);
-      } finally {
-        setLoading(false);
       }
+  
+      setLoading(false);
     };
-
+  
     checkAuth();
   }, [navigate]);
+  
 
   if (loading) return null;
 

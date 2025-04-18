@@ -28,21 +28,48 @@ const ProfileSetup = () => {
   }, [navigate]);
 
   const handleSubmit = async () => {
-    const { error } = await supabase
+    // First check if the profile already exists
+    const { data: existingUser, error: fetchError } = await supabase
       .from("users")
-      .update({
-        username,
-        allergens: selectedAllergens,
-        person_type: personType,
-      })
-      .eq("id", userId);
-
-    if (error) {
-      alert("Error saving profile: " + error.message);
-    } else {
-      navigate("/"); // Redirect to Explore page
+      .select("id")
+      .eq("id", userId)
+      .single();
+  
+    if (fetchError && fetchError.code !== "PGRST116") {
+      // If it's not the "no rows" error, log and return
+      alert("Error checking existing user: " + fetchError.message);
+      return;
     }
-  };
+  
+    let result;
+    if (!existingUser) {
+      // Insert new user profile
+      result = await supabase
+        .from("users")
+        .insert({
+          id: userId,
+          username,
+          allergens: selectedAllergens,
+          person_type: personType,
+        });
+    } else {
+      // Update existing user profile
+      result = await supabase
+        .from("users")
+        .update({
+          username,
+          allergens: selectedAllergens,
+          person_type: personType,
+        })
+        .eq("id", userId);
+    }
+  
+    if (result.error) {
+      alert("Error saving profile: " + result.error.message);
+    } else {
+      navigate("/");
+    }
+  };  
 
   const toggleAllergen = (allergen) => {
     setSelectedAllergens((prev) =>

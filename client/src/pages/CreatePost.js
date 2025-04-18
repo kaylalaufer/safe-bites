@@ -92,7 +92,7 @@ function CreatePost() {
             ...formData,
             restaurant: place.name || "",
             location: place.formatted_address || "",
-            place_type: mappedType,
+            place_type: mappedType ? [mappedType] : [],
             google_place_id: placeId || "",
             lat,
             lng,
@@ -167,6 +167,21 @@ function CreatePost() {
           .from("restaurants")
           .update({ associated_allergens: merged })
           .eq("id", restaurantId);
+
+          // 4. Append new place_type if not already in the array
+          const currentTypes = existingRestaurant.place_type || [];
+          if (
+            formData.place_type &&
+            !currentTypes.includes(formData.place_type)
+          ) {
+            await supabase
+              .from("restaurants")
+              .update({
+                place_type: [...currentTypes, formData.place_type],
+              })
+              .eq("id", restaurantId);
+          }
+
       } else {
         // 4. Insert new restaurant
         const { data: newRestaurant, error: insertError } = await supabase
@@ -175,7 +190,7 @@ function CreatePost() {
             {
               name: formData.restaurant,
               location: formData.location,
-              place_type: formData.place_type,
+              place_type: formData.place_type ? [formData.place_type] : [],
               google_place_id: formData.google_place_id,
               hidden_allergens: formData.hidden_allergens
                 ? [formData.hidden_allergens]
@@ -300,9 +315,9 @@ function CreatePost() {
             >
                 <option value="">Select type</option>
                 {[
-                "Bakery", "Cafe", "Ice Cream", "Diner", "Breakfast", "Fast Food", "Casual Dining",
-                "Fine Dining", "Vegan-Friendly", "Vegetarian-Options", "Italian", "Seafood", "Pizza",
-                "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"
+                "Bakery", "Ice Cream", "Boba", "Cafe", "Fast Food", "Diner", 
+                "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", 
+                "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"
                 ].map((type) => (
                 <option key={type} value={type}>{type}</option>
                 ))}

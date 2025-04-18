@@ -8,9 +8,11 @@ import "react-toastify/dist/ReactToastify.css";
 import Explore from "./pages/Explore";
 import CreatePost from "./pages/CreatePost";
 import Login from "./pages/Login";
+import RestaurantPage from "./pages/RestaurantPage";
 import ProfileSetup from "./pages/ProfileSetup";
 import AuthWrapper from "./components/AuthWrapper";
 import TestDataInsert from "./components/TestDataInsert";
+import ProfileCheckWrapper from "./components/ProfileCheckWrapper";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
@@ -52,6 +54,7 @@ function App() {
 
   return (
     <Router>
+      <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={GOOGLE_MAPS_LIBRARIES}>
       <ToastContainer position="top-center" autoClose={4000} />
       <div className="bg-gray-100 min-h-screen flex flex-col">
        <Header user={user} isGuest={isGuest} handleLogout={handleLogout} />  
@@ -66,9 +69,11 @@ function App() {
               path="/"
               element={
                 <AuthWrapper>
-                  <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={GOOGLE_MAPS_LIBRARIES}>
+                  <ProfileCheckWrapper>
+                  
                     <Explore />
-                  </LoadScript>
+                 
+                  </ProfileCheckWrapper>
                 </AuthWrapper>
               }
             />
@@ -77,9 +82,20 @@ function App() {
               path="/create"
               element={
                 <AuthWrapper>
-                  <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={GOOGLE_MAPS_LIBRARIES}>
+                  <ProfileCheckWrapper>
+                  
                     <CreatePost />
-                  </LoadScript>
+                 
+                  </ProfileCheckWrapper>
+                </AuthWrapper>
+              }
+            />
+
+            <Route
+              path="/restaurant/:id"
+              element={
+                <AuthWrapper>
+                    <RestaurantPage/>
                 </AuthWrapper>
               }
             />
@@ -88,6 +104,7 @@ function App() {
         </main>
         <Footer />
       </div>
+      </LoadScript>
     </Router>
   );
 }

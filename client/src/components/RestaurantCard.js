@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const RestaurantCard = ({ restaurant }) => {
   const summary = restaurant.restaurant_allergen_summary || [];
@@ -19,10 +20,13 @@ const RestaurantCard = ({ restaurant }) => {
 
   return (
     <div className="bg-gray-100 p-4 rounded-lg shadow-md">
-      {/* Name & Location */}
-      <h3 className="text-lg font-semibold">{restaurant.name}</h3>
-      <p className="text-gray-600">{restaurant.location}</p>
 
+      <Link to={`/restaurant/${restaurant.id}`}>
+        {/* Name & Location */}
+        <h3 className="text-lg font-semibold">{restaurant.name}</h3>
+        <p className="text-gray-600">{restaurant.location}</p>
+      </Link>
+      
       {/* Allergens */}
       <p className="text-sm text-gray-700">
         <strong>Allergens:</strong>{" "}
@@ -68,6 +72,7 @@ const RestaurantCard = ({ restaurant }) => {
         </div>
       </div>
     </div>
+    
   );
 };
 

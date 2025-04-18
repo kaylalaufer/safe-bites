@@ -5,7 +5,7 @@ import SearchBox from "../components/SearchBox";
 import RestaurantCard from "../components/RestaurantCard";
 
 const ALLERGENS = ["Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
-const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
+const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Boba", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
 
 const Explore = () => {
     const [markers, setMarkers] = useState([]);
@@ -56,10 +56,7 @@ const Explore = () => {
                 (sum, row) => sum + row.unsafe_count,
                 0
               );
-              console.log(restaurant.name);
-              console.log(totalSafe);
-              console.log(totalAccommodating);
-              console.log(totalUnsafe);
+
               return {
                 ...restaurant,
                 totalSafe,
@@ -108,24 +105,24 @@ const Explore = () => {
     // Filter restaurants based on selected allergens & type
     const filteredRestaurants = restaurants.filter((restaurant) => {
       const allergens = restaurant.associated_allergens || [];
-      const type = restaurant.place_type || "";
-  
+
       const matchesAllergens =
         selectedAllergens.length === 0 ||
         selectedAllergens.every((allergen) => allergens.includes(allergen));
+      
+      const types = restaurant.place_type || [];
+      const matchesType = selectedType === "" || types.includes(selectedType);
   
-      const matchesType =
-        selectedType === "" || type === selectedType;
   
       return matchesAllergens && matchesType;
     });
-
+    // <div className="text-center py-4 bg-white shadow-md w-full">
     return (
         <div className="h-screen w-full flex flex-col">
             {/* Title Section */}
-            <div className="text-center py-4 bg-white shadow-md w-full">
-                <h2 className="text-2xl font-bold text-gray-800">Explore Allergy-Friendly Restaurants</h2>
-            </div>
+            
+              <h2 className="text-2xl font-bold text-green-800">Explore Allergy-Friendly Restaurants</h2>
+            
 
             {/* Main Content - Full-Width Map & Listings */}
             <div className="flex flex-grow w-full absolute top-40 left-0">
