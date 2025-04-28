@@ -238,7 +238,7 @@ function CreatePost() {
       for (const { allergen, category } of allergen_feedback) {
         const column = `${category}_count`;
       
-        const { data, error } = await supabase.rpc("increment_allergen_summary", {
+        const { error } = await supabase.rpc("increment_allergen_summary", {
           rest_id: restaurantId,
           allergen_name: allergen,
           column_name: column,

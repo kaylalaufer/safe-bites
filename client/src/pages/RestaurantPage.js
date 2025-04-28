@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import ReviewCard from "../components/ReviewCard";
+import AllergenSummary from "../components/AllergenSummary";
 
 const RestaurantPage = () => {
     const { id } = useParams();
     const [restaurant, setRestaurant] = useState(null);
+    const [reviews, setReviews] = useState([]); // ✅ instead of null
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -31,8 +34,29 @@ const RestaurantPage = () => {
             setLoading(false);
         };
 
-        fetchRestaurant();
-    }, [id]);
+        const fetchReviews = async () => {
+          const { data, error } = await supabase
+          .from("reviews")
+          .select(`*,
+            users (
+            username)
+            `)
+            .eq("restaurant_id", id)
+            .order("created_at", { ascending: false });
+      
+          if (error) {
+            console.error("Error fetching reviews:", error.message);
+          } else {
+            setReviews(data); // You'll need to define `reviews` state
+          }
+        };
+        
+
+        if (id) {
+          fetchRestaurant();
+          fetchReviews();
+        }
+      }, [id]);
 
     if (loading) return<p className="text-center p-4">Loading...</p>;
     if (!restaurant) return <p className="text-center p-4">Restaurant not found.</p>;
@@ -68,20 +92,19 @@ const RestaurantPage = () => {
         </div>
     
         {/* Allergen Safety Breakdown */}
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Allergen Safety Breakdown</h2>
-          <div className="space-y-3">
-            {restaurant.restaurant_allergen_summary?.map((item) => (
-              <div key={item.allergen} className="flex items-center justify-between bg-gray-50 p-3 rounded shadow-sm">
-                <span className="font-medium text-gray-800">{item.allergen}</span>
-                <div className="flex gap-4 text-sm">
-                  <span className="text-green-600">✅ {item.safe_count}</span>
-                  <span className="text-yellow-600">🟡 {item.accommodating_count}</span>
-                  <span className="text-red-600">❌ {item.unsafe_count}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <AllergenSummary summary={restaurant.restaurant_allergen_summary_by_allergen} />
+
+        <div className="mt-10">
+          <h2 className="text-xl font-bold mb-4">User Reviews</h2>
+          {reviews.length === 0 ? (
+            <p className="text-gray-500">No reviews yet for this restaurant.</p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );    
