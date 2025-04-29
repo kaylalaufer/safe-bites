@@ -84,8 +84,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-pink-600">
           {isSignUp ? "Create an Account" : "Welcome To Safe Bites!"}
         </h2>
@@ -135,7 +134,7 @@ const Login = () => {
         </div>
 )}
       </div>
-    </div>
+
   );
 };
 

@@ -55,13 +55,23 @@ function App() {
   return (
     <Router>
       <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY} libraries={GOOGLE_MAPS_LIBRARIES}>
-      <ToastContainer position="top-center" autoClose={4000} />
-      <div className="bg-gray-100 min-h-screen flex flex-col">
-       <Header user={user} isGuest={isGuest} handleLogout={handleLogout} />  
 
-        <main className="max-w-4xl mx-auto p-4">
+      <div className="flex flex-col min-h-screen bg-gray-100">
+
+        <ToastContainer position="top-center" autoClose={4000} />
+
+        <Header user={user} isGuest={isGuest} handleLogout={handleLogout} />  
+
+        <main className="flex-grow flex items-center justify-center">
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={
+                <div className="flex flex-grow items-center justify-center bg-gray-100">
+                  <Login />
+                </div>
+              }
+            />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/test-insert" element={<TestDataInsert />} />
 
@@ -103,6 +113,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        
       </div>
       </LoadScript>
     </Router>

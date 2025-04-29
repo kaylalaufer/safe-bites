@@ -5,109 +5,134 @@ import ReviewCard from "../components/ReviewCard";
 import AllergenSummary from "../components/AllergenSummary";
 
 const RestaurantPage = () => {
-    const { id } = useParams();
-    const [restaurant, setRestaurant] = useState(null);
-    const [reviews, setReviews] = useState([]); // ✅ instead of null
-    const [loading, setLoading] = useState(true);
+  const { id } = useParams();
 
-    useEffect(() => {
-        const fetchRestaurant = async () => {
-            const { data, error } = await supabase
-            .from("restaurants")
-            .select(`
-                id, name, location, place_type, hidden_allergens, associated_allergens,
-                restaurant_allergen_summary (
-                  allergen,
-                  safe_count,
-                  accommodating_count,
-                  unsafe_count
-                )
-              `)
-              .eq("id", id)
-              .single();
+  // ====== State ======
+  const [restaurant, setRestaurant] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAllergens, setSelectedAllergens] = useState([]);
 
-            if (error) {
-                console.error("Error fetching restaurant:", error.message);
-            } else {
-                setRestaurant(data);
-            }
-            setLoading(false);
-        };
+  // ====== Fetching ======
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
 
-        const fetchReviews = async () => {
-          const { data, error } = await supabase
+      try {
+        const [{ data: restaurantData, error: restaurantError }, { data: allergenData, error: allergenError }] = await Promise.all([
+          supabase.from("restaurants").select("id, name, location, place_type, hidden_allergens, associated_allergens").eq("id", id).single(),
+          supabase.from("restaurant_allergen_summary").select("allergen, safe_count, accommodating_count, unsafe_count").eq("restaurant_id", id),
+        ]);
+
+        if (restaurantError || allergenError) throw new Error(restaurantError?.message || allergenError?.message);
+
+        setRestaurant({
+          ...restaurantData,
+          allergenSummary: allergenData || [],
+        });
+
+        const { data: reviewData, error: reviewError } = await supabase
           .from("reviews")
-          .select(`*,
-            users (
-            username)
-            `)
-            .eq("restaurant_id", id)
-            .order("created_at", { ascending: false });
-      
-          if (error) {
-            console.error("Error fetching reviews:", error.message);
-          } else {
-            setReviews(data); // You'll need to define `reviews` state
-          }
-        };
-        
+          .select("*, users (username)")
+          .eq("restaurant_id", id)
+          .order("created_at", { ascending: false });
 
-        if (id) {
-          fetchRestaurant();
-          fetchReviews();
-        }
-      }, [id]);
+        if (reviewError) throw new Error(reviewError.message);
 
-    if (loading) return<p className="text-center p-4">Loading...</p>;
-    if (!restaurant) return <p className="text-center p-4">Restaurant not found.</p>;
-  
-    return (
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-        {/* Header */}
-        <div className="mb-6 border-b pb-4">
-          <h1 className="text-3xl font-bold text-pink-800 mb-1">{restaurant.name}</h1>
-          <p className="text-gray-600">{restaurant.location}</p>
-          <p className="text-sm text-gray-500 italic">{(restaurant.place_type || []).join(", ")}</p>
-        </div>
-    
-        {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Hidden Allergens</h2>
-            <p className="text-sm text-gray-700">
-              {restaurant.hidden_allergens?.length > 0
-                ? restaurant.hidden_allergens.join(", ")
-                : "None reported"}
-            </p>
-          </div>
-    
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Associated Allergens</h2>
-            <p className="text-sm text-gray-700">
-              {restaurant.associated_allergens?.length > 0
-                ? restaurant.associated_allergens.join(", ")
-                : "Not available"}
-            </p>
-          </div>
-        </div>
-    
-        {/* Allergen Safety Breakdown */}
-        <AllergenSummary summary={restaurant.restaurant_allergen_summary_by_allergen} />
+        setReviews(reviewData);
+      } catch (error) {
+        console.error("Error fetching data:", error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        <div className="mt-10">
-          <h2 className="text-xl font-bold mb-4">User Reviews</h2>
-          {reviews.length === 0 ? (
-            <p className="text-gray-500">No reviews yet for this restaurant.</p>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );    
+    if (id) fetchData();
+  }, [id]);
+
+  // ====== Handlers ======
+  const toggleAllergen = (allergen) => {
+    setSelectedAllergens((prev) =>
+      prev.includes(allergen)
+        ? prev.filter((a) => a !== allergen)
+        : [...prev, allergen]
+    );
   };
-  
-  export default RestaurantPage;  
+
+  // ====== Filtering ======
+  const filteredSummary = selectedAllergens.length === 0
+    ? restaurant?.allergenSummary
+    : restaurant?.allergenSummary.filter((entry) =>
+        selectedAllergens.includes(entry.allergen)
+      );
+
+  const filteredReviews = selectedAllergens.length === 0
+    ? reviews
+    : reviews.filter((review) =>
+        (review.allergen_feedback || []).some((feedback) =>
+          selectedAllergens.includes(feedback.allergen)
+        )
+      );
+
+  // ====== Render ======
+
+  if (loading) return <p className="text-center p-4">Loading...</p>;
+  if (!restaurant) return <p className="text-center p-4">Restaurant not found.</p>;
+
+  return (
+    <main className="w-full min-h-screen max-w-4xl mx-auto p-6">
+      {/* Restaurant Header */}
+      <section className="mb-8">
+        <h1 className="text-4xl font-bold text-pink-800 mb-2">{restaurant.name}</h1>
+        <p className="text-gray-700">{restaurant.location}</p>
+        <p className="text-sm italic text-gray-500">{(restaurant.place_type || []).join(", ")}</p>
+      </section>
+
+      {/* Allergen Filter */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4">Filter by Allergen</h2>
+        <div className="flex flex-wrap gap-3">
+          {restaurant.associated_allergens?.map((allergen) => {
+            const isSelected = selectedAllergens.includes(allergen);
+            return (
+              <button
+                key={allergen}
+                onClick={() => toggleAllergen(allergen)}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition ${
+                  isSelected
+                    ? "bg-pink-300 text-emerald-700"
+                    : "bg-pink-100 text-emerald-600 px-3 py-1 rounded-full flex items-center cursor-pointer hover:bg-pink-200"
+                }`}
+              >
+                {allergen}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Safety Summary */}
+      {filteredSummary && (
+        <section className="mb-10">
+          <AllergenSummary summary={filteredSummary} />
+        </section>
+      )}
+
+      {/* Reviews */}
+      <section>
+        <h2 className="text-2xl font-semibold mb-4">User Reviews</h2>
+        {filteredReviews.length === 0 ? (
+          <p className="text-gray-500">No reviews yet matching this filter.</p>
+        ) : (
+          <div className="space-y-4">
+            {filteredReviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+};
+
+export default RestaurantPage;

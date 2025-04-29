@@ -19,7 +19,7 @@ const RestaurantCard = ({ restaurant }) => {
   const formatTooltip = (list) => (list.length ? list.join(", ") : "");
 
   return (
-    <div className="bg-gray-100 p-4 rounded-lg shadow-md">
+    <div className="bg-white p-4 rounded-lg shadow-md">
 
       <Link to={`/restaurant/${restaurant.id}`}>
         {/* Name & Location */}
