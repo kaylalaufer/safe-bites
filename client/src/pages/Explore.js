@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import MapComponent from "../components/MapComponent";
 import SearchBox from "../components/SearchBox";
 import RestaurantCard from "../components/RestaurantCard";
+import FloatingCreateButton from "../components/FloatingCreateButton";
 
 const ALLERGENS = ["Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
 const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Boba", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
@@ -206,6 +207,7 @@ const Explore = () => {
                 </div>
               </div>
             </div>
+            <FloatingCreateButton />
         </main>
         
     );

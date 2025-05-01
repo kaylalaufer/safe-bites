@@ -18,12 +18,7 @@ const Header = ({ user, isGuest, handleLogout }) => {
           >
             Explore
           </Link>
-          <Link
-            to="/create"
-            className="text-lg font-semibold text-pink-700 hover:text-pink-900 transition"
-          >
-            Create Post
-          </Link>
+          
         </div>
 
         {user || isGuest ? (

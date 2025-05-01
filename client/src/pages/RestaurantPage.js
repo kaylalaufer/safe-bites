@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import ReviewCard from "../components/ReviewCard";
 import AllergenSummary from "../components/AllergenSummary";
+import { toast } from "react-toastify";
 
 const RestaurantPage = () => {
   const { id } = useParams();
@@ -12,6 +13,8 @@ const RestaurantPage = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAllergens, setSelectedAllergens] = useState([]);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   // ====== Fetching ======
   useEffect(() => {
@@ -39,6 +42,12 @@ const RestaurantPage = () => {
 
         if (reviewError) throw new Error(reviewError.message);
 
+        const getUser = async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          setUser(user);
+        };
+
+        getUser();
         setReviews(reviewData);
       } catch (error) {
         console.error("Error fetching data:", error.message);
@@ -120,7 +129,23 @@ const RestaurantPage = () => {
 
       {/* Reviews */}
       <section>
-        <h2 className="text-2xl font-semibold mb-4">User Reviews</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">User Reviews</h2>
+          <button
+            onClick={() => {
+              if (user) {
+                navigate(
+                  `/create?restaurantId=${restaurant.id}&name=${encodeURIComponent(restaurant.name)}&location=${encodeURIComponent(restaurant.location)}&place_type=${encodeURIComponent(restaurant.place_type)}`
+                );
+              } else {
+                toast.info("Please log in to add a review!");
+              }
+            }}
+            className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg text-sm transition"
+          >
+            + Add Review
+          </button>
+        </div>
         {filteredReviews.length === 0 ? (
           <p className="text-gray-500">No reviews yet matching this filter.</p>
         ) : (

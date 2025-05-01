@@ -1,24 +1,44 @@
+/* TODO: Need to fix pretillType
+RN, it is inputting as [[X]], instead of [X] 
+Also, need to keep inputs when it was prefilled 
+(so it is consistent with the restaurant they 
+were visiting in Restaurant Page*/
+
 import React, { useState, useEffect } from "react";
-//import { createPost } from "../utils/api";
 import { toast } from "react-toastify";
 import { Autocomplete } from "@react-google-maps/api";
 import { supabase } from "../supabaseClient";
+import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function CreatePost() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(location.search);
+
+  //const prefillRestaurantId = params.get("restaurantId");
+  const prefillName = params.get("name") || "";
+  const prefillLocation = params.get("location") || "";
+  const prefillType = params.get("place_type") || "";
+  
+  console.log(prefillType)
+  console.log(Array.isArray(prefillType))
+
   const [formData, setFormData] = useState({
-    restaurant: "",
-    location: "",
-    place_type: "",
+    restaurant: "" || prefillName,
+    location: "" || prefillLocation,
+    place_type: prefillType,
     google_place_id: "",
     hidden_allergens: "",
     allergens: [],
-    //restrictions: [],
     experience: "",
     user: "",
     review: "",
     lat: null,
     lng: null,
   });
+
+  console.log("Form Data:", formData);
 
   const isGuest = sessionStorage.getItem("isGuest") === "true";
 
@@ -57,6 +77,59 @@ function CreatePost() {
   
     getUser();
   }, [isGuest]); // ✅ Add isGuest to the dependency array  
+
+  useEffect(() => {
+    const fetchPlaceDetails = async () => {
+      if (prefillName && prefillLocation) {
+        try {
+          const service = new window.google.maps.places.PlacesService(
+            document.createElement("div")
+          );
+  
+          const request = {
+            query: `${prefillName}, ${prefillLocation}`,
+            fields: ["place_id", "geometry", "name", "formatted_address", "types"],
+          };
+  
+          service.findPlaceFromQuery(request, (results, status) => {
+            if (status === window.google.maps.places.PlacesServiceStatus.OK && results[0]) {
+              const place = results[0];
+  
+              const lat = place.geometry?.location?.lat();
+              const lng = place.geometry?.location?.lng();
+              const placeId = place.place_id;
+              //const rawType = place.types?.[0] || "";
+  
+              /*const typeMapping = {
+                cafe: "Cafe",
+                bakery: "Bakery",
+                restaurant: "Casual Dining",
+                meal_delivery: "Fast Food",
+                meal_takeaway: "Fast Food",
+                ice_cream_shop: "Ice Cream",
+              };*/
+              
+              //const mappedType = typeMapping[rawType] || "";
+  
+              setFormData((prev) => ({
+                ...prev,
+                restaurant: prefillName,
+                location: prefillLocation,
+                google_place_id: placeId,
+                lat,
+                lng,
+                place_type: prefillType || "",
+              }));
+            }
+          });
+        } catch (err) {
+          console.error("Error fetching place details:", err);
+        }
+      }
+    };
+  
+    fetchPlaceDetails();
+  }, [prefillName, prefillLocation, prefillType]);
 
   const userAllergens = profile.allergens || [];
 
@@ -129,7 +202,7 @@ function CreatePost() {
       // 1. Check if restaurant exists
       const { data: existingRestaurant, error } = await supabase
         .from("restaurants")
-        .select("id,hidden_allergens,associated_allergens")
+        .select("id, hidden_allergens, associated_allergens, place_type")        
         .eq("name", formData.restaurant)
         .eq("location", formData.location)
         .eq("google_place_id", formData.google_place_id)
@@ -143,6 +216,7 @@ function CreatePost() {
       let restaurantId;
   
       if (existingRestaurant) {
+        console.log("Restaurant already exists:", existingRestaurant);
         restaurantId = existingRestaurant.id;
   
         // 2. Append hidden allergens if needed
@@ -160,30 +234,37 @@ function CreatePost() {
   
         // 3. Append associated allergens
         const existingAssociated = existingRestaurant.associated_allergens || [];
-        const merged = Array.from(
+        console.log("Existing associated allergens:", existingAssociated);
+        const mergedAllergens = Array.from(
           new Set([...existingAssociated, ...profile.allergens])
         );
+
         await supabase
           .from("restaurants")
-          .update({ associated_allergens: merged })
+          .update({ associated_allergens: mergedAllergens })
           .eq("id", restaurantId);
 
-          // 4. Append new place_type if not already in the array
-          const currentTypes = existingRestaurant.place_type || [];
-          if (
-            formData.place_type &&
-            !currentTypes.includes(formData.place_type)
-          ) {
-            await supabase
-              .from("restaurants")
-              .update({
-                place_type: [...currentTypes, formData.place_type],
-              })
-              .eq("id", restaurantId);
-          }
+        // 4. Append new place_type if not already in the array
+        const currentTypes = existingRestaurant.place_type || [];
+        console.log("Current types:", currentTypes);
+        const newType = Array.isArray(formData.place_type)
+          ? formData.place_type[0]
+          : formData.place_type;
+
+        if (newType && !currentTypes.includes(newType)) {
+          const updatedTypes = Array.from(new Set([...currentTypes, newType]));
+          console.log("Updated type arrary",updatedTypes)
+          await supabase
+            .from("restaurants")
+            .update({
+              place_type: updatedTypes,
+            })
+            .eq("id", restaurantId);
+        }
 
       } else {
         // 4. Insert new restaurant
+        console.log("Inserting new restaurant:", formData);
         const { data: newRestaurant, error: insertError } = await supabase
           .from("restaurants")
           .insert([
@@ -208,6 +289,7 @@ function CreatePost() {
       }
   
       // 5. Insert review
+      console.log("Inserting review:")
       const { error: reviewError } = await supabase.from("reviews").insert([
         {
           user_id: user.id,
@@ -220,6 +302,7 @@ function CreatePost() {
       if (reviewError) throw reviewError;
   
       toast.success("Review posted! 🎉");
+      navigate(`/restaurant/${restaurantId}`);
 
       // Increment the appropriate safety count
       const safetyCounts = {
@@ -286,9 +369,12 @@ function CreatePost() {
                 name="restaurant"
                 value={formData.restaurant}
                 onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
+                className={`w-full p-3 border rounded-lg ${
+                  prefillName ? "bg-gray-100" : ""
+                }`}
                 placeholder="Search for a restaurant..."
                 required
+                disabled={!!prefillName}
               />
             </Autocomplete>
           </div>
@@ -311,7 +397,8 @@ function CreatePost() {
                 name="place_type"
                 value={formData.place_type}
                 onChange={handleChange}
-                className="w-full p-3 border rounded-lg"
+                className={`w-full p-3 border rounded-lg`}
+
             >
                 <option value="">Select type</option>
                 {[
@@ -321,6 +408,7 @@ function CreatePost() {
                 ].map((type) => (
                 <option key={type} value={type}>{type}</option>
                 ))}
+                
             </select>
           </div>
                 
