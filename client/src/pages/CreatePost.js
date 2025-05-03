@@ -1,9 +1,3 @@
-/* TODO: Need to fix pretillType
-RN, it is inputting as [[X]], instead of [X] 
-Also, need to keep inputs when it was prefilled 
-(so it is consistent with the restaurant they 
-were visiting in Restaurant Page*/
-
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { Autocomplete } from "@react-google-maps/api";

@@ -97,6 +97,11 @@ const RestaurantPage = () => {
         <p className="text-sm italic text-gray-500">{(restaurant.place_type || []).join(", ")}</p>
       </section>
 
+      {/* Hidden Allergens */}
+      <section className="mb-8">
+        <p className="text-gray-700">{(restaurant.hidden_allergens || []).join(", ")}</p>
+      </section>
+
       {/* Allergen Filter */}
       <section className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Filter by Allergen</h2>

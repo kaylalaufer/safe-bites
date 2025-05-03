@@ -13,6 +13,8 @@ const Explore = () => {
     const [selectedAllergens, setSelectedAllergens] = useState([]);
     const [selectedType, setSelectedType] = useState("");
     const [restaurants, setRestaurants] = useState([]);
+    const [mapCenter, setMapCenter] = useState({ lat: 40.7128, lng: -74.006 });
+    const [zoom, setZoom] = useState(12);
   
     // Fetch restaurants from Supabase
     useEffect(() => {
@@ -45,18 +47,9 @@ const Explore = () => {
             const enrichedData = data.map((restaurant) => {
               const allergenSummary = restaurant.restaurant_allergen_summary || [];
             
-              const totalSafe = allergenSummary.reduce(
-                (sum, row) => sum + row.safe_count,
-                0
-              );
-              const totalAccommodating = allergenSummary.reduce(
-                (sum, row) => sum + row.accommodating_count,
-                0
-              );
-              const totalUnsafe = allergenSummary.reduce(
-                (sum, row) => sum + row.unsafe_count,
-                0
-              );
+              const totalSafe = allergenSummary.reduce((sum, row) => sum + row.safe_count,0);
+              const totalAccommodating = allergenSummary.reduce((sum, row) => sum + row.accommodating_count,0);
+              const totalUnsafe = allergenSummary.reduce((sum, row) => sum + row.unsafe_count,0);
 
               return {
                 ...restaurant,
@@ -134,11 +127,16 @@ const Explore = () => {
                 <div className="w-1/2 flex flex-col p-4">
                     {/* Search Bar */}
                     <div className="mb-4">
-                        <SearchBox onSelect={(location) => setMarkers([...markers, location])} />
+                    <SearchBox onSelect={(location) => {
+                      setMarkers([...markers, location]); // if needed
+                      setMapCenter({ lat: location.lat, lng: location.lng });
+                      setZoom(16);
+                    }} />
+
                     </div>
                     {/* Map Component */}
                     <div className="flex-grow rounded-md overflow-hidden">
-                        <MapComponent markers={markers} />
+                        <MapComponent markers={filteredRestaurants} mapCenter={mapCenter} zoom={zoom} />
                     </div>
                 </div>
 
