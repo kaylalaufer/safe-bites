@@ -18,6 +18,13 @@ const Header = ({ user, isGuest, handleLogout }) => {
           >
             Explore
           </Link>
+
+          <Link
+            to="/profile"
+            className="text-lg font-semibold text-pink-700 hover:text-pink-900 transition"
+          >
+            Profile
+          </Link>
           
         </div>
 

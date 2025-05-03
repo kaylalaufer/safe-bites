@@ -15,6 +15,8 @@ const Explore = () => {
     const [restaurants, setRestaurants] = useState([]);
     const [mapCenter, setMapCenter] = useState({ lat: 40.7128, lng: -74.006 });
     const [zoom, setZoom] = useState(12);
+    const [mapBounds, setMapBounds] = useState(null);
+    const [searchPlace, setSearchPlace] = useState(null);
   
     // Fetch restaurants from Supabase
     useEffect(() => {
@@ -108,7 +110,15 @@ const Explore = () => {
       const matchesType = selectedType === "" || types.includes(selectedType);
   
   
-      return matchesAllergens && matchesType;
+      const withinBounds =
+        !mapBounds ||
+        (restaurant.lat >= mapBounds.south &&
+        restaurant.lat <= mapBounds.north &&
+        restaurant.lng >= mapBounds.west &&
+        restaurant.lng <= mapBounds.east);
+
+      return matchesAllergens && matchesType && withinBounds;
+
     });
 
 
@@ -126,17 +136,59 @@ const Explore = () => {
                 {/* Left Side - Full-Height Map */}
                 <div className="w-1/2 flex flex-col p-4">
                     {/* Search Bar */}
-                    <div className="mb-4">
+                    {/*<div className="mb-4">
                     <SearchBox onSelect={(location) => {
                       setMarkers([...markers, location]); // if needed
                       setMapCenter({ lat: location.lat, lng: location.lng });
                       setZoom(16);
-                    }} />
+                    }} /> 
+                     </div>*/}
+                    <div className="mb-4">
+                      <SearchBox
+                        onSelect={async (place) => {
+                          setMapCenter({ lat: place.lat, lng: place.lng });
+                          setSearchPlace(place);
+                          setZoom(16);
 
+                          // Step 3: Check Supabase for the place
+                          const { data: match, error } = await supabase
+                            .from("restaurants")
+                            .select("id")
+                            .eq("google_place_id", place.place_id)
+                            .maybeSingle();
+
+                          // Step 4: Add temporary marker if not in DB
+                          if (!match && !error) {
+                            console.log("Place not found in DB, adding temporary marker");
+                            const tempMarker = {
+                              id: "new", // Temporary ID
+                              name: place.name,
+                              location: place.location,
+                              lat: place.lat,
+                              lng: place.lng,
+                              place_type: [], // Optional default
+                              isNew: true,
+                            };
+                            console.log("Adding temporary marker:", tempMarker);
+                            setMarkers((prev) => [...prev, tempMarker]);
+                            const exists = restaurants.some(r => r.id === "new");
+                            if (!exists) {
+                              setRestaurants((prev) => [...prev, tempMarker]);
+                            }
+                          }
+                        }}
+                      />
                     </div>
+
+                    
                     {/* Map Component */}
                     <div className="flex-grow rounded-md overflow-hidden">
-                        <MapComponent markers={filteredRestaurants} mapCenter={mapCenter} zoom={zoom} />
+                      <MapComponent
+                        markers={filteredRestaurants}
+                        mapCenter={mapCenter}
+                        zoom={zoom}
+                        onBoundsChange={(bounds) => setMapBounds(bounds)}
+                      />
                     </div>
                 </div>
 

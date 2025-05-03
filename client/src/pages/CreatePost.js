@@ -4,6 +4,7 @@ import { Autocomplete } from "@react-google-maps/api";
 import { supabase } from "../supabaseClient";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import StickyHeader from "../components/StickyHeader";
 
 function CreatePost() {
   const location = useLocation();
@@ -346,6 +347,7 @@ function CreatePost() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">
+      <StickyHeader title="Explore" />
       <h1 className="text-3xl font-bold text-pink-900 mb-4 text-center">
         Post a Review
       </h1>

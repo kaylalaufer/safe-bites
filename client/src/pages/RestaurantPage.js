@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import ReviewCard from "../components/ReviewCard";
 import AllergenSummary from "../components/AllergenSummary";
 import { toast } from "react-toastify";
+import StickyHeader from "../components/StickyHeader";
 
 const RestaurantPage = () => {
   const { id } = useParams();
@@ -90,6 +91,7 @@ const RestaurantPage = () => {
 
   return (
     <main className="w-full min-h-screen max-w-4xl mx-auto p-6">
+      <StickyHeader title="Explore" />
       {/* Restaurant Header */}
       <section className="mb-8">
         <h1 className="text-4xl font-bold text-pink-800 mb-2">{restaurant.name}</h1>

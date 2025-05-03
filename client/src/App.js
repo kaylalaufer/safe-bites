@@ -10,6 +10,7 @@ import CreatePost from "./pages/CreatePost";
 import Login from "./pages/Login";
 import RestaurantPage from "./pages/RestaurantPage";
 import ProfileSetup from "./pages/ProfileSetup";
+import Profile from "./pages/Profile";
 import AuthWrapper from "./components/AuthWrapper";
 import TestDataInsert from "./components/TestDataInsert";
 import ProfileCheckWrapper from "./components/ProfileCheckWrapper";
@@ -109,6 +110,9 @@ function App() {
                 </AuthWrapper>
               }
             />
+
+            <Route path="/profile" 
+            element={<Profile />} />
             
           </Routes>
         </main>
