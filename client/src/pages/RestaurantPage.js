@@ -1,34 +1,67 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import ReviewCard from "../components/ReviewCard";
 import AllergenSummary from "../components/AllergenSummary";
 import { toast } from "react-toastify";
 import StickyHeader from "../components/StickyHeader";
+import HeartButton from "../components/HeartButton";
 
 const RestaurantPage = () => {
   const { id } = useParams();
-
-  // ====== State ======
-  const [restaurant, setRestaurant] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedAllergens, setSelectedAllergens] = useState([]);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // ====== Fetching ======
+  const [restaurant, setRestaurant] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [user, setUser] = useState(null);
+  const [selectedAllergens, setSelectedAllergens] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch user + favorites
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserAndFavorites = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      setUser(user);
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("favorites")
+        .eq("id", user.id)
+        .single();
+
+      if (!error && data?.favorites) {
+        setFavorites(data.favorites);
+      }
+    };
+
+    fetchUserAndFavorites();
+  }, []);
+
+  // Fetch restaurant + reviews
+  useEffect(() => {
+    const fetchRestaurantData = async () => {
       setLoading(true);
 
       try {
         const [{ data: restaurantData, error: restaurantError }, { data: allergenData, error: allergenError }] = await Promise.all([
-          supabase.from("restaurants").select("id, name, location, place_type, hidden_allergens, associated_allergens").eq("id", id).single(),
-          supabase.from("restaurant_allergen_summary").select("allergen, safe_count, accommodating_count, unsafe_count").eq("restaurant_id", id),
+          supabase
+            .from("restaurants")
+            .select("id, name, location, place_type, hidden_allergens, associated_allergens")
+            .eq("id", id)
+            .single(),
+
+          supabase
+            .from("restaurant_allergen_summary")
+            .select("allergen, safe_count, accommodating_count, unsafe_count")
+            .eq("restaurant_id", id),
         ]);
 
-        if (restaurantError || allergenError) throw new Error(restaurantError?.message || allergenError?.message);
+        if (restaurantError || allergenError) {
+          throw new Error(restaurantError?.message || allergenError?.message);
+        }
 
         setRestaurant({
           ...restaurantData,
@@ -43,24 +76,18 @@ const RestaurantPage = () => {
 
         if (reviewError) throw new Error(reviewError.message);
 
-        const getUser = async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          setUser(user);
-        };
-
-        getUser();
         setReviews(reviewData);
-      } catch (error) {
-        console.error("Error fetching data:", error.message);
+      } catch (err) {
+        console.error("Error loading data:", err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) fetchData();
+    if (id) fetchRestaurantData();
   }, [id]);
 
-  // ====== Handlers ======
+  // Handle allergen tag click
   const toggleAllergen = (allergen) => {
     setSelectedAllergens((prev) =>
       prev.includes(allergen)
@@ -69,32 +96,47 @@ const RestaurantPage = () => {
     );
   };
 
-  // ====== Filtering ======
-  const filteredSummary = selectedAllergens.length === 0
-    ? restaurant?.allergenSummary
-    : restaurant?.allergenSummary.filter((entry) =>
-        selectedAllergens.includes(entry.allergen)
-      );
+  // Derived data
+  const isFavorited = useMemo(
+    () => Array.isArray(favorites) && favorites.includes(id),
+    [favorites, id]
+  );
 
-  const filteredReviews = selectedAllergens.length === 0
-    ? reviews
-    : reviews.filter((review) =>
-        (review.allergen_feedback || []).some((feedback) =>
-          selectedAllergens.includes(feedback.allergen)
-        )
-      );
+  const filteredSummary =
+    selectedAllergens.length === 0
+      ? restaurant?.allergenSummary
+      : restaurant?.allergenSummary.filter((entry) =>
+          selectedAllergens.includes(entry.allergen)
+        );
 
-  // ====== Render ======
+  const filteredReviews =
+    selectedAllergens.length === 0
+      ? reviews
+      : reviews.filter((review) =>
+          (review.allergen_feedback || []).some((feedback) =>
+            selectedAllergens.includes(feedback.allergen)
+          )
+        );
 
+  // Render logic
   if (loading) return <p className="text-center p-4">Loading...</p>;
   if (!restaurant) return <p className="text-center p-4">Restaurant not found.</p>;
 
   return (
     <main className="w-full min-h-screen max-w-4xl mx-auto p-6">
       <StickyHeader title="Explore" />
-      {/* Restaurant Header */}
+
+      {/* Header */}
       <section className="mb-8">
-        <h1 className="text-4xl font-bold text-pink-800 mb-2">{restaurant.name}</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-pink-800">{restaurant.name}</h1>
+          <HeartButton
+            restaurantId={restaurant.id}
+            userId={user?.id}
+            isFavorited={isFavorited}
+            setFavorites={setFavorites}
+          />
+        </div>
         <p className="text-gray-700">{restaurant.location}</p>
         <p className="text-sm italic text-gray-500">{(restaurant.place_type || []).join(", ")}</p>
       </section>
@@ -117,7 +159,7 @@ const RestaurantPage = () => {
                 className={`px-4 py-2 rounded-full border text-sm font-medium transition ${
                   isSelected
                     ? "bg-pink-300 text-emerald-700"
-                    : "bg-pink-100 text-emerald-600 px-3 py-1 rounded-full flex items-center cursor-pointer hover:bg-pink-200"
+                    : "bg-pink-100 text-emerald-600 hover:bg-pink-200"
                 }`}
               >
                 {allergen}
@@ -128,7 +170,7 @@ const RestaurantPage = () => {
       </section>
 
       {/* Safety Summary */}
-      {filteredSummary && (
+      {filteredSummary?.length > 0 && (
         <section className="mb-10">
           <AllergenSummary summary={filteredSummary} />
         </section>
@@ -139,20 +181,25 @@ const RestaurantPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">User Reviews</h2>
           <button
-            onClick={() => {
-              if (user) {
-                navigate(
-                  `/create?restaurantId=${restaurant.id}&name=${encodeURIComponent(restaurant.name)}&location=${encodeURIComponent(restaurant.location)}&place_type=${encodeURIComponent(restaurant.place_type)}`
-                );
-              } else {
-                toast.info("Please log in to add a review!");
-              }
-            }}
+            onClick={() =>
+              user
+                ? navigate(
+                    `/create?restaurantId=${restaurant.id}&name=${encodeURIComponent(
+                      restaurant.name
+                    )}&location=${encodeURIComponent(
+                      restaurant.location
+                    )}&place_type=${encodeURIComponent(
+                      restaurant.place_type
+                    )}`
+                  )
+                : toast.info("Please log in to add a review!")
+            }
             className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg text-sm transition"
           >
             + Add Review
           </button>
         </div>
+
         {filteredReviews.length === 0 ? (
           <p className="text-gray-500">No reviews yet matching this filter.</p>
         ) : (

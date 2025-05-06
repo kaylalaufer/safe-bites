@@ -17,11 +17,38 @@ const Explore = () => {
     const [zoom, setZoom] = useState(12);
     const [mapBounds, setMapBounds] = useState(null);
     const [searchPlace, setSearchPlace] = useState(null);
+    const [favorites, setFavorites] = useState([]);
+    const [userId, setUserId] = useState(null);
   
     // Fetch restaurants from Supabase
     useEffect(() => {
-        const fetchRestaurants = async () => {
-          const { data, error } = await supabase
+      const fetchUserFavorites = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+    
+        setUserId(user.id);
+    
+        const { data, error } = await supabase
+          .from("users")
+          .select("favorites")
+          .eq("id", user.id)
+          .single();
+    
+        if (!error && data?.favorites) {
+          setFavorites(data.favorites); // ✅ trigger second useEffect
+        } else {
+          setFavorites([]); // fallback
+        }
+      };
+    
+      fetchUserFavorites();
+    }, []);
+    
+    useEffect(() => {
+      if (!Array.isArray(favorites)) return;
+    
+      const fetchRestaurants = async () => {
+        const { data, error } = await supabase
           .from("restaurants")
           .select(`
             id,
@@ -31,9 +58,6 @@ const Explore = () => {
             lng,
             place_type,
             associated_allergens,
-            safe_count,
-            accommodating_count,
-            unsafe_count,
             restaurant_allergen_summary (
               allergen,
               safe_count,
@@ -41,51 +65,39 @@ const Explore = () => {
               unsafe_count
             )
           `);
-        
+    
+        if (error) {
+          console.error("Error fetching restaurants:", error.message);
+          return;
+        }
+    
+        const enrichedData = data.map((restaurant) => {
+          const allergenSummary = restaurant.restaurant_allergen_summary || [];
+    
+          const totalSafe = allergenSummary.reduce((sum, row) => sum + row.safe_count, 0);
+          const totalAccommodating = allergenSummary.reduce((sum, row) => sum + row.accommodating_count, 0);
+          const totalUnsafe = allergenSummary.reduce((sum, row) => sum + row.unsafe_count, 0);
+    
+          return {
+            ...restaurant,
+            totalSafe,
+            totalAccommodating,
+            totalUnsafe,
+            isFavorited: Array.isArray(favorites) && favorites.includes(restaurant.id),
+          };
+        });
+    
+        const validMarkers = enrichedData.filter((r) => r.lat && r.lng);
+    
+        setMarkers(validMarkers);
+        setRestaurants(enrichedData);
+      };
+    
+      fetchRestaurants();
+    }, [favorites]); // ✅ this will now run only after favorites is loaded
+    
       
-          if (error) {
-            console.error("Error fetching restaurants:", error.message);
-          } else {
-            const enrichedData = data.map((restaurant) => {
-              const allergenSummary = restaurant.restaurant_allergen_summary || [];
-            
-              const totalSafe = allergenSummary.reduce((sum, row) => sum + row.safe_count,0);
-              const totalAccommodating = allergenSummary.reduce((sum, row) => sum + row.accommodating_count,0);
-              const totalUnsafe = allergenSummary.reduce((sum, row) => sum + row.unsafe_count,0);
-
-              return {
-                ...restaurant,
-                totalSafe,
-                totalAccommodating,
-                totalUnsafe,
-              };
-            
-            });
-            
-            // Filter out any without coordinates
-            const validMarkers = enrichedData
-              .filter((r) => r.lat && r.lng)
-              .map((r) => ({
-                id: r.id,
-                name: r.name,
-                location: r.location,
-                lat: r.lat,
-                lng: r.lng,
-                place_type: r.place_type,
-                totalSafe: r.totalSafe,
-                totalAccommodating: r.totalAccommodating,
-                totalUnsafe: r.totalUnsafe,
-              }));
-      
-            setMarkers(validMarkers);       // for your <MapComponent />
-            setRestaurants(enrichedData);           // for your listing/filtering UI
-          }
-        };
-      
-        fetchRestaurants();
-      }, []);
-      
-  
+    
     // Handle selecting allergens (add/remove)
     const handleAllergenSelect = (e) => {
       const allergen = e.target.value;
@@ -97,7 +109,7 @@ const Explore = () => {
     const removeAllergen = (allergen) => {
       setSelectedAllergens(selectedAllergens.filter((item) => item !== allergen));
     };
-  
+
     // Filter restaurants based on selected allergens & type
     const filteredRestaurants = restaurants.filter((restaurant) => {
       const allergens = restaurant.associated_allergens || [];
@@ -129,20 +141,11 @@ const Explore = () => {
             {/* Title Section */}  
             <h2 className="text-2xl font-bold text-green-800">Explore Allergy-Friendly Restaurants</h2>
             
-
             {/* Main Content - Full-Width Map & Listings */}
             <div className="flex-grow flex w-full bg-gray-100 p-4">
 
                 {/* Left Side - Full-Height Map */}
                 <div className="w-1/2 flex flex-col p-4">
-                    {/* Search Bar */}
-                    {/*<div className="mb-4">
-                    <SearchBox onSelect={(location) => {
-                      setMarkers([...markers, location]); // if needed
-                      setMapCenter({ lat: location.lat, lng: location.lng });
-                      setZoom(16);
-                    }} /> 
-                     </div>*/}
                     <div className="mb-4">
                       <SearchBox
                         onSelect={async (place) => {
@@ -180,7 +183,6 @@ const Explore = () => {
                       />
                     </div>
 
-                    
                     {/* Map Component */}
                     <div className="flex-grow rounded-md overflow-hidden">
                       <MapComponent
@@ -248,7 +250,13 @@ const Explore = () => {
                     {filteredRestaurants.length > 0 ? (
                         <div className="space-y-4">
                             {filteredRestaurants.map((restaurant) => (
-                                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+                                <RestaurantCard
+                                key={restaurant.id}
+                                restaurant={restaurant}
+                                isFavorited={restaurant.isFavorited}
+                                userId={userId}
+                                setFavorites={setFavorites} // optional if HeartIcon will update Supabase
+                              />
                             ))}
                         </div>
                     ) : (

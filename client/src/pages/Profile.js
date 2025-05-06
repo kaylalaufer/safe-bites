@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import StickyHeader from "../components/StickyHeader";
+import FloatingCreateButton from "../components/FloatingCreateButton";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -204,7 +205,7 @@ const Profile = () => {
           ) : (
             <p className="text-sm text-gray-600 text-center">
               None yet,{" "}
-              <button className="text-blue-600 underline" onClick={() => navigate("/create-post")}>
+              <button className="text-blue-600 underline" onClick={() => navigate("/create")}>
                 click here
               </button>{" "}
               to post your first review!
@@ -212,6 +213,7 @@ const Profile = () => {
           )}
         </div>
       </div>
+      <FloatingCreateButton />
       {/* Logout Button */}
     </main>
   );
