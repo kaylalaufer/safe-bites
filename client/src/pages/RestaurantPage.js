@@ -70,7 +70,7 @@ const RestaurantPage = () => {
 
         const { data: reviewData, error: reviewError } = await supabase
           .from("reviews")
-          .select("*, users (username)")
+          .select("*, users (username, person_type)")
           .eq("restaurant_id", id)
           .order("created_at", { ascending: false });
 
@@ -142,9 +142,27 @@ const RestaurantPage = () => {
       </section>
 
       {/* Hidden Allergens */}
-      <section className="mb-8">
-        <p className="text-gray-700">{(restaurant.hidden_allergens || []).join(", ")}</p>
-      </section>
+      {restaurant.hidden_allergens?.length > 0 && (
+        <section className="mb-8">
+          <h3 className="text-lg font-semibold text-red-600 flex items-center mb-2">
+            ⚠️ Hidden Allergens
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {restaurant.hidden_allergens.map((allergen) => (
+              <span
+                key={allergen}
+                className="bg-gray text-red-700 px-3 py-1 rounded-full text-sm border border-red-300"
+              >
+                {allergen}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            These allergens may not be listed on the menu but were reported by users.
+          </p>
+        </section>
+      )}
+
 
       {/* Allergen Filter */}
       <section className="mb-8">

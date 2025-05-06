@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import RestaurantPage from "./pages/RestaurantPage";
 import ProfileSetup from "./pages/ProfileSetup";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+
 import AuthWrapper from "./components/AuthWrapper";
 import TestDataInsert from "./components/TestDataInsert";
 import ProfileCheckWrapper from "./components/ProfileCheckWrapper";
@@ -113,6 +115,9 @@ function App() {
 
             <Route path="/profile" 
             element={<Profile />} />
+
+            <Route path="/edit-profile" 
+            element={<EditProfile />} />  
             
           </Routes>
         </main>

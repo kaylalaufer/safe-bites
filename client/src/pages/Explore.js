@@ -35,7 +35,7 @@ const Explore = () => {
           .single();
     
         if (!error && data?.favorites) {
-          setFavorites(data.favorites); // ✅ trigger second useEffect
+          setFavorites(data.favorites); // trigger second useEffect
         } else {
           setFavorites([]); // fallback
         }

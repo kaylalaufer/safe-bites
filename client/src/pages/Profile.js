@@ -1,10 +1,11 @@
 //bg-[#23443D]
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import StickyHeader from "../components/StickyHeader";
 import FloatingCreateButton from "../components/FloatingCreateButton";
+import { Pencil } from "lucide-react";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -12,6 +13,14 @@ const Profile = () => {
   const navigate = useNavigate();
   const [myReviews, setmyReviews] = useState([]);
   const [openSections, setOpenSections] = useState({});
+
+  const PERSON_TYPE_LABELS = {
+    adult: "Adult with allergies",
+    parent: "Parent of child with allergies",
+    college_student: "College student with allergies",
+    child: "Child with allergies",
+  };
+  
 
 
   const toggleSection = (restaurantId) => {
@@ -100,18 +109,28 @@ const Profile = () => {
   return (
     <main className="w-full min-h-screen max-w-4xl mx-auto p-6">
       <StickyHeader title="Explore" />
+
+      <div className="flex justify-end">
+        <Link to="/edit-profile" title="Edit Profile">
+          <Pencil className="w-5 h-5 text-gray-600 hover:text-pink-600 cursor-pointer" />
+        </Link>
+      </div>
+
       {/* Profile Header */}
-      <div className="text-center mt-6">
-        <div className="bg-[#8e445c] w-28 h-28 rounded-full mx-auto flex items-center justify-center text-white font-bold text-sm">
-          User<br />profile<br />pic
+      <div className="text-center mt-8">
+        <div className="bg-white p-4 rounded-lg shadow-md inline-block">
+
+          <h2 className="mt-4 text-xl font-bold">@{profile.username}</h2>
+          <p className="mt-4 text-sm text-gray-600">Allergen(s): {profile.allergens?.join(", ") || "None"}</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {PERSON_TYPE_LABELS[profile.person_type] || profile.person_type}
+          </p>
+
         </div>
-        <h2 className="mt-4 text-xl font-bold">@{profile.username}</h2>
-        <p className="mt-2 text-sm text-gray-600">Allergies: {profile.allergens?.join(", ") || "None"}</p>
-        <p className="text-sm text-gray-500">Person Type: {profile.person_type}</p>
       </div>
 
       {/* Favorites + Reviews */}
-      <div className="flex flex-col md:flex-row justify-center gap-8 mt-10 px-4">
+      <div className="flex flex-col md:flex-row justify-center gap-8 mt-20 px-4">
         {/* Favorites Section */}
         <div className="bg-white text-black p-4 rounded-xl shadow-md w-full md:w-1/2 border-4 border-[#f1d1d8] max-h-80 overflow-y-auto">
           <h3 className="font-semibold text-lg mb-2 text-center">Favorites</h3>
@@ -170,30 +189,6 @@ const Profile = () => {
                         {group.reviews.map((r) => (
                           <div key={r.id} className="bg-gray-50 p-3 rounded-md border">
                             <p className="text-sm text-gray-700 mb-1">{r.review_text}</p>
-                            {/*<div className="flex flex-wrap gap-2">
-                              {r.allergen_feedback.map((f, idx) => {
-                                console.log(f);
-                                let emoji = "⚠";
-                                let color = "text-yellow-600";
-
-                                if (f.rating === "safe") {
-                                  emoji = "✅";
-                                  color = "text-green-600";
-                                } else if (f.rating === "unsafe") {
-                                  emoji = "❌";
-                                  color = "text-red-600";
-                                }
-
-                                return (
-                                  <span
-                                    key={idx}
-                                    className={`px-2 py-1 text-xs font-medium rounded-full bg-gray-200 ${color}`}
-                                  >
-                                    {emoji} {f.allergen}
-                                  </span>
-                                );
-                              })}
-                            </div> */}
                           </div>
                         ))}
                       </div>
@@ -214,7 +209,6 @@ const Profile = () => {
         </div>
       </div>
       <FloatingCreateButton />
-      {/* Logout Button */}
     </main>
   );
 };

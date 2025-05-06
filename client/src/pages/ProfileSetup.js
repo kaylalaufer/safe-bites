@@ -6,7 +6,12 @@ const allergenOptions = [
   "Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"
 ];
 
-const personTypes = ["adult", "parent", "college_student", "child"];
+const PERSON_TYPES = [
+  { value: "adult", label: "Adult with allergies" },
+  { value: "parent", label: "Parent of child with allergies" },
+  { value: "college_student", label: "College student with allergies" },
+  { value: "child", label: "Child with allergies" },
+];
 
 const ProfileSetup = () => {
   const [username, setUsername] = useState("");
@@ -28,48 +33,48 @@ const ProfileSetup = () => {
   }, [navigate]);
 
   const handleSubmit = async () => {
-    // First check if the profile already exists
+
+    if (!username.trim()) {
+      alert("Username is required.");
+      return;
+    }
+    
+    if (!personType.trim()) {
+      alert("Please select your allergy type.");
+      return;
+    }
+
     const { data: existingUser, error: fetchError } = await supabase
       .from("users")
       .select("id")
       .eq("id", userId)
       .single();
-  
+
     if (fetchError && fetchError.code !== "PGRST116") {
-      // If it's not the "no rows" error, log and return
       alert("Error checking existing user: " + fetchError.message);
       return;
     }
-  
+
+    const updateData = {
+      id: userId,
+      username,
+      allergens: selectedAllergens,
+      person_type: personType
+    };
+
     let result;
     if (!existingUser) {
-      // Insert new user profile
-      result = await supabase
-        .from("users")
-        .insert({
-          id: userId,
-          username,
-          allergens: selectedAllergens,
-          person_type: personType,
-        });
+      result = await supabase.from("users").insert(updateData);
     } else {
-      // Update existing user profile
-      result = await supabase
-        .from("users")
-        .update({
-          username,
-          allergens: selectedAllergens,
-          person_type: personType,
-        })
-        .eq("id", userId);
+      result = await supabase.from("users").update(updateData).eq("id", userId);
     }
-  
+
     if (result.error) {
       alert("Error saving profile: " + result.error.message);
     } else {
       navigate("/");
     }
-  };  
+  };
 
   const toggleAllergen = (allergen) => {
     setSelectedAllergens((prev) =>
@@ -82,13 +87,15 @@ const ProfileSetup = () => {
   return (
     <div className="max-w-xl mx-auto p-4">
       <h2 className="text-2xl font-semibold mb-4">Complete Your Profile</h2>
-
+      <h3 className="font-medium mb-2">Username: *</h3>
       <input
         type="text"
+        required
         className="border p-2 w-full mb-4"
-        placeholder="Username"
+        placeholder="@username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
+        
       />
 
       <h3 className="font-medium mb-2">Select Allergens:</h3>
@@ -108,20 +115,20 @@ const ProfileSetup = () => {
         ))}
       </div>
 
-      <h3 className="font-medium mb-2">I am a:</h3>
-      <select
-        className="border p-2 w-full mb-6"
-        value={personType}
-        onChange={(e) => setPersonType(e.target.value)}
-      >
-        <option value="">Select</option>
-        {personTypes.map((type) => (
-          <option key={type} value={type}>
-            {type.replace("_", " ")}
-          </option>
-        ))}
-      </select>
-
+      <h3 className="font-medium mb-2">I am a(n): *</h3>
+        <select
+          name="person_type"
+          value={personType}
+          onChange={(e) => setPersonType(e.target.value)}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">Select Type</option>
+          {PERSON_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {type.label}
+            </option>
+          ))}
+        </select>
       <button
         className="bg-pink-600 text-white px-4 py-2 rounded w-full"
         onClick={handleSubmit}
