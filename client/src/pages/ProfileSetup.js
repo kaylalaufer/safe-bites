@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { Autocomplete } from "@react-google-maps/api";
+import { useLocation } from "react-router-dom";
+
 
 const allergenOptions = [
   "Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"
@@ -19,6 +22,11 @@ const ProfileSetup = () => {
   const [personType, setPersonType] = useState("");
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
+  const [autocomplete, setAutocomplete] = useState(null);
+
+  const [location, setLocation] = useState("");
+  const [latLng, setLatLng] = useState({ lat: null, lng: null });
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -32,6 +40,18 @@ const ProfileSetup = () => {
     fetchUser();
   }, [navigate]);
 
+  const handlePlaceSelect = () => {
+    if (autocomplete) {
+      const place = autocomplete.getPlace();
+      const location = place.formatted_address;
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+  
+      setLocation(location);
+      setLatLng({ lat, lng });
+    }
+  };
+
   const handleSubmit = async () => {
 
     if (!username.trim()) {
@@ -41,6 +61,11 @@ const ProfileSetup = () => {
     
     if (!personType.trim()) {
       alert("Please select your allergy type.");
+      return;
+    }
+
+    if (!location || latLng.lat == null || latLng.lng == null) {
+      alert("Please select your location from the suggestions.");
       return;
     }
 
@@ -59,7 +84,10 @@ const ProfileSetup = () => {
       id: userId,
       username,
       allergens: selectedAllergens,
-      person_type: personType
+      person_type: personType,
+      location,
+      lat: latLng.lat,
+      lng: latLng.lng,
     };
 
     let result;
@@ -83,6 +111,7 @@ const ProfileSetup = () => {
         : [...prev, allergen]
     );
   };
+  
 
   return (
     <div className="max-w-xl mx-auto p-4">
@@ -97,6 +126,19 @@ const ProfileSetup = () => {
         onChange={(e) => setUsername(e.target.value)}
         
       />
+
+      <h3 className="font-medium mb-2">Your Location: *</h3>
+      <Autocomplete
+        onLoad={(auto) => setAutocomplete(auto)}
+        onPlaceChanged={handlePlaceSelect}
+      >
+        <input
+          type="text"
+          placeholder="Enter your city, zip code, or address"
+          className="border p-2 w-full mb-4"
+          required
+        />
+      </Autocomplete>
 
       <h3 className="font-medium mb-2">Select Allergens:</h3>
       <div className="flex flex-wrap gap-2 mb-4">
@@ -130,7 +172,7 @@ const ProfileSetup = () => {
           ))}
         </select>
       <button
-        className="bg-pink-600 text-white px-4 py-2 rounded w-full"
+        className="bg-pink-600 text-white px-4 py-2 rounded w-full mt-6"
         onClick={handleSubmit}
       >
         Save & Continue

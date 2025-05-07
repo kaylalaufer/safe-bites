@@ -1,13 +1,8 @@
-/* TODO: Add review restaurant for markers (autofill) that are 
-restaurants that aren't in the db.
-Add restaurant pics / google map info in restaurant page.
-add profile page.
-favorits. 
-Update restaurant list based on location radius on map */
-
 import React, { useRef, useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+
 
 const containerStyle = {
   width: "100%",
@@ -41,12 +36,34 @@ const MapComponent = ({ markers, mapCenter, zoom = 12, onBoundsChange }) => {
     }
   };
 
+  const [userCenter, setUserCenter] = useState(null);
+
   // Recenter the map when mapCenter changes
   useEffect(() => {
-    if (mapRef.current && mapCenter) {
-      mapRef.current.panTo(mapCenter);
-    }
-  }, [mapCenter])
+    const fetchUserLocation = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+  
+      if (user) {
+        const { data, error } = await supabase
+          .from("users")
+          .select("lat, lng")
+          .eq("id", user.id)
+          .single();
+  
+        if (!error && data?.lat && data?.lng) {
+          setUserCenter({
+            lat: data.lat,
+            lng: data.lng,
+          });
+        }
+        console.log("User location fetched:", userCenter);
+
+      }
+      console.log("User location fetched:", userCenter);
+    };
+  
+    fetchUserLocation();
+  }, []);
 
   return (
     <GoogleMap
