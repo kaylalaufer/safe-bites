@@ -3,20 +3,19 @@ import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
-
 const containerStyle = {
   width: "100%",
   height: "600px",
 };
 
 const defaultCenter = {
-  lat: 40.7128, // Default to NYC
-  lng: -74.006,
-  zoom: 5,
+  lat: 40.7128, // NYC fallback
+  lng: -74.0060,
 };
 
-const MapComponent = ({ markers, mapCenter, zoom = 12, onBoundsChange }) => {
+const MapComponent = ({ markers, zoom = 12, onBoundsChange }) => {
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [userCenter, setUserCenter] = useState(null);
   const mapRef = useRef(null);
   const navigate = useNavigate();
 
@@ -36,39 +35,33 @@ const MapComponent = ({ markers, mapCenter, zoom = 12, onBoundsChange }) => {
     }
   };
 
-  const [userCenter, setUserCenter] = useState(null);
-
-  // Recenter the map when mapCenter changes
   useEffect(() => {
     const fetchUserLocation = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-  
+
       if (user) {
         const { data, error } = await supabase
           .from("users")
           .select("lat, lng")
           .eq("id", user.id)
           .single();
-  
-        if (!error && data?.lat && data?.lng) {
-          setUserCenter({
-            lat: data.lat,
-            lng: data.lng,
-          });
-        }
-        console.log("User location fetched:", userCenter);
 
+        if (!error && data?.lat && data?.lng) {
+          setUserCenter({ lat: data.lat, lng: data.lng });
+          console.log("User location fetched successfully", data);
+        } else {
+          console.error("Failed to fetch user location", error);
+        }
       }
-      console.log("User location fetched:", userCenter);
     };
-  
+
     fetchUserLocation();
   }, []);
 
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={mapCenter || defaultCenter}
+      center={userCenter || defaultCenter}
       zoom={zoom}
       onLoad={(map) => (mapRef.current = map)}
       onBoundsChanged={handleBoundsChanged}
