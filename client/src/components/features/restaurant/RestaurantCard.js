@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import HeartButton from "./HeartButton";
+import HeartButton from "../../common/buttons/HeartButton";
 
 const RestaurantCard = ({ restaurantId, restaurant, userId, isFavorited, setFavorites }) => {
   const summary = restaurant.restaurant_allergen_summary || [];

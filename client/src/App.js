@@ -13,11 +13,11 @@ import ProfileSetup from "./pages/ProfileSetup";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 
-import AuthWrapper from "./components/AuthWrapper";
-import TestDataInsert from "./components/TestDataInsert";
-import ProfileCheckWrapper from "./components/ProfileCheckWrapper";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import AuthWrapper from "./components/features/auth/AuthWrapper";
+import TestDataInsert from "./components/features/profile/TestDataInsert";
+import ProfileCheckWrapper from "./components/features/auth/ProfileCheckWrapper";
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
 
 const GOOGLE_MAPS_LIBRARIES = ["places"];
 

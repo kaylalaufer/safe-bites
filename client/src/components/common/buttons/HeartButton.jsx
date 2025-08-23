@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../../../supabaseClient";
 
 const HeartButton = ({ restaurantId, userId, isFavorited, setFavorites }) => {
   const [localFavorited, setLocalFavorited] = useState(isFavorited);

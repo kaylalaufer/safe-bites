@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../../../supabaseClient";
 
 const containerStyle = {
   width: "100%",
