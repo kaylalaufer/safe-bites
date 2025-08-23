@@ -4,7 +4,7 @@ import { Autocomplete } from "@react-google-maps/api";
 import { supabase } from "../supabaseClient";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import StickyHeader from "../components/StickyHeader";
+import { StickyHeader } from "../components";
 
 function CreatePost() {
   const location = useLocation();

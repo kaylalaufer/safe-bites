@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CircleUserRound, HelpCircle } from "lucide-react";
-import HelpModal from "./HelpModal";
+import HelpModal from "../common/modals/HelpModal";
 
 const Header = ({ user, isGuest, handleLogout }) => {
   const location = useLocation();

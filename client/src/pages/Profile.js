@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import StickyHeader from "../components/StickyHeader";
-import FloatingCreateButton from "../components/FloatingCreateButton";
+import { StickyHeader, FloatingCreateButton } from "../components";
 import { Pencil } from "lucide-react";
 
 const Profile = () => {

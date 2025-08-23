@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import StickyHeader from "../components/StickyHeader";
+import { StickyHeader } from "../components";
 
 const EditProfile = () => {
     const [profile, setProfile] = useState({

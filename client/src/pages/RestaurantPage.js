@@ -1,11 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import ReviewCard from "../components/ReviewCard";
-import AllergenSummary from "../components/AllergenSummary";
 import { toast } from "react-toastify";
-import StickyHeader from "../components/StickyHeader";
-import HeartButton from "../components/HeartButton";
+import { StickyHeader, HeartButton, ReviewCard, AllergenSummary } from "../components";
 
 const RestaurantPage = () => {
   const { id } = useParams();
