@@ -97,12 +97,12 @@ const RestaurantPage = () => {
     [favorites, id]
   );
 
-  const filteredSummary =
-    selectedAllergens.length === 0
-      ? restaurant?.allergenSummary
-      : restaurant?.allergenSummary.filter((entry) =>
-          selectedAllergens.includes(entry.allergen)
-        );
+  const filteredSummary = useMemo(() => {
+    const summary = restaurant?.allergenSummary;
+    if (!summary || selectedAllergens.length === 0) return summary;
+
+    return summary.filter((entry) => selectedAllergens.includes(entry.allergen));
+  }, [restaurant, selectedAllergens]);
 
   const filteredReviews =
     selectedAllergens.length === 0

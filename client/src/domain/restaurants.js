@@ -35,6 +35,29 @@ export function safetyTotals(summary = []) {
   };
 }
 
+export function groupAllergenVotes(summary = []) {
+  const votes = {};
+
+  for (const entry of summary) {
+    const { allergen, safe_count, accommodating_count, unsafe_count } = entry;
+
+    if (safe_count > 0) {
+      votes.safe = votes.safe || {};
+      votes.safe[allergen] = safe_count;
+    }
+    if (accommodating_count > 0) {
+      votes.accommodating = votes.accommodating || {};
+      votes.accommodating[allergen] = accommodating_count;
+    }
+    if (unsafe_count > 0) {
+      votes.unsafe = votes.unsafe || {};
+      votes.unsafe[allergen] = unsafe_count;
+    }
+  }
+
+  return votes;
+}
+
 export function withFavoriteFlag(restaurant, favorites) {
   return {
     ...restaurant,

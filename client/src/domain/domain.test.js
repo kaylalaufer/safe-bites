@@ -9,6 +9,7 @@ import {
 import {
   enrichRestaurant,
   filterRestaurants,
+  groupAllergenVotes,
   isWithinBounds,
   normalizePlaceType,
   safetyTotals,
@@ -151,6 +152,30 @@ describe("safetyTotals", () => {
       totalAccommodating: 0,
       totalUnsafe: 0,
     });
+  });
+});
+
+describe("groupAllergenVotes", () => {
+  test("maps counts into safe, accommodating, and unsafe", () => {
+    expect(
+      groupAllergenVotes([
+        { allergen: "Peanut", safe_count: 2, accommodating_count: 0, unsafe_count: 1 },
+        { allergen: "Soy", safe_count: 0, accommodating_count: 3, unsafe_count: 0 },
+      ])
+    ).toEqual({
+      safe: { Peanut: 2 },
+      accommodating: { Soy: 3 },
+      unsafe: { Peanut: 1 },
+    });
+  });
+
+  test("omits categories with no positive counts", () => {
+    expect(groupAllergenVotes()).toEqual({});
+    expect(
+      groupAllergenVotes([
+        { allergen: "Milk", safe_count: 0, accommodating_count: 0, unsafe_count: 0 },
+      ])
+    ).toEqual({});
   });
 });
 
