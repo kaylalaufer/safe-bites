@@ -3,26 +3,24 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { toast } from "react-toastify";
 import { StickyHeader, HeartButton, ReviewCard, AllergenSummary } from "../components";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const RestaurantPage = () => {
+  const { user } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [restaurant, setRestaurant] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [favorites, setFavorites] = useState([]);
-  const [user, setUser] = useState(null);
   const [selectedAllergens, setSelectedAllergens] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch user + favorites
   useEffect(() => {
+    if (!user) return;
+
     const fetchUserAndFavorites = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      setUser(user);
-
       const { data, error } = await supabase
         .from("users")
         .select("favorites")
@@ -35,7 +33,7 @@ const RestaurantPage = () => {
     };
 
     fetchUserAndFavorites();
-  }, []);
+  }, [user]);
 
   // Fetch restaurant + reviews
   useEffect(() => {

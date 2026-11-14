@@ -1,39 +1,18 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../../../supabaseClient";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthProvider";
 
 const AuthWrapper = ({ children }) => {
-  const [loading, setLoading] = useState(true);
+  const { user, isGuest, loading } = useAuth();
   const navigate = useNavigate();
+  const allowed = isGuest || Boolean(user);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const isGuest = sessionStorage.getItem("isGuest") === "true";
-  
-      if (!isGuest) {
-        try {
-          const { data: { user }, error } = await supabase.auth.getUser();
-  
-          if (error) {
-            console.warn("Supabase auth error:", error.message);
-          }
-  
-          if (!user) {
-            navigate("/login");
-          }
-        } catch (e) {
-          console.error("AuthWrapper error:", e);
-        }
-      }
-  
-      setLoading(false);
-    };
-  
-    checkAuth();
-  }, [navigate]);
-  
+    if (loading || allowed) return;
+    navigate("/login");
+  }, [allowed, loading, navigate]);
 
-  if (loading) return null;
+  if (loading || !allowed) return null;
 
   return <>{children}</>;
 };

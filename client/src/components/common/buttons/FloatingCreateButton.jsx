@@ -1,28 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../../supabaseClient";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { toast } from "react-toastify";
+import { canPostReview } from "../../../domain";
+import { useAuth } from "../../features/auth/AuthProvider";
 
 const FloatingCreateButton = () => {
   const navigate = useNavigate();
-  const isGuest = sessionStorage.getItem("isGuest") === "true";
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-  
-    getUser();
-  }, [isGuest]); 
+  const { user, isGuest } = useAuth();
 
   const handleClick = () => {
-    if (user || !isGuest) {
-        navigate("/create");
+    if (canPostReview({ user, isGuest })) {
+      navigate("/create");
     } else {
-        toast.info("Please log in to post a review.");
-        navigate("/");
+      toast.info("Please log in to post a review.");
+      navigate("/");
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
+import { useAuth } from "../auth/AuthProvider";
 
 const containerStyle = {
   width: "100%",
@@ -14,6 +15,7 @@ const defaultCenter = {
 };
 
 const MapComponent = ({ markers, zoom = 12, onBoundsChange }) => {
+  const { user } = useAuth();
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [userCenter, setUserCenter] = useState(null);
   const mapRef = useRef(null);
@@ -36,27 +38,25 @@ const MapComponent = ({ markers, zoom = 12, onBoundsChange }) => {
   };
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchUserLocation = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from("users")
+        .select("lat, lng")
+        .eq("id", user.id)
+        .single();
 
-      if (user) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("lat, lng")
-          .eq("id", user.id)
-          .single();
-
-        if (!error && data?.lat && data?.lng) {
-          setUserCenter({ lat: data.lat, lng: data.lng });
-          console.log("User location fetched successfully", data);
-        } else {
-          console.error("Failed to fetch user location", error);
-        }
+      if (!error && data?.lat && data?.lng) {
+        setUserCenter({ lat: data.lat, lng: data.lng });
+        console.log("User location fetched successfully", data);
+      } else {
+        console.error("Failed to fetch user location", error);
       }
     };
 
     fetchUserLocation();
-  }, []);
+  }, [user]);
 
   return (
     <GoogleMap

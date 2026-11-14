@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { StickyHeader } from "../components";
 import { ALLERGENS, PERSON_TYPES } from "../domain";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const EditProfile = () => {
+    const { user, logout } = useAuth();
     const [profile, setProfile] = useState({
         username: "",
         allergens: [],
@@ -16,11 +18,13 @@ const EditProfile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const fetchProfile = async () => {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -34,7 +38,7 @@ const EditProfile = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,7 +56,6 @@ const EditProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     if (!profile.username.trim()) {
@@ -73,6 +76,21 @@ const EditProfile = () => {
       navigate("/profile");
     }
   };
+
+  if (!user) {
+    return (
+      <div className="text-center mt-10">
+        <p className="text-gray-700 mb-4">Sign in to edit your profile.</p>
+        <button
+          type="button"
+          onClick={logout}
+          className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700"
+        >
+          Log in
+        </button>
+      </div>
+    );
+  }
 
   if (loading) return <p>Loading...</p>;
 

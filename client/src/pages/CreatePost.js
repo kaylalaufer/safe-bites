@@ -5,7 +5,8 @@ import { supabase } from "../supabaseClient";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { StickyHeader } from "../components";
-import { RESTAURANT_TYPES, SAFETY_LABELS } from "../domain";
+import { RESTAURANT_TYPES, SAFETY_LABELS, canPostReview } from "../domain";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 function CreatePost() {
   const location = useLocation();
@@ -36,10 +37,9 @@ function CreatePost() {
 
   console.log("Form Data:", formData);
 
-  const isGuest = sessionStorage.getItem("isGuest") === "true";
+  const { user, isGuest } = useAuth();
 
   const [autocomplete, setAutocomplete] = useState(null);
-  const [user, setUser] = useState(null);
 
   //const [safetyCategory, setSafetyCategory] = useState("");
   const [allAllergensAffected, setAllAllergensAffected] = useState("yes");
@@ -52,27 +52,24 @@ function CreatePost() {
   });
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-  
-      if (!isGuest && user) {
-        const { data, error } = await supabase
-          .from("users")
-          .select("username, allergens")
-          .eq("id", user.id)
-          .single();
-  
-        if (error) {
-          console.error("Error fetching profile:", error.message);
-        } else {
-          setProfile(data);
-        }
+    if (!canPostReview({ user, isGuest })) return;
+
+    const loadProfile = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("username, allergens")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+      } else {
+        setProfile(data);
       }
     };
-  
-    getUser();
-  }, [isGuest]); // ✅ Add isGuest to the dependency array  
+
+    loadProfile();
+  }, [isGuest, user]);  
 
   useEffect(() => {
     const fetchPlaceDetails = async () => {
@@ -172,7 +169,7 @@ function CreatePost() {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    if (!user || isGuest) {
+    if (!canPostReview({ user, isGuest })) {
       toast.error("You must be logged in to post a review.");
       return;
     }
@@ -531,7 +528,7 @@ function CreatePost() {
             />
           </div>
 
-          {isGuest ? (
+          {!canPostReview({ user, isGuest }) ? (
             <div
               onClick={() => toast.info("Please log in to post a review.")}
               className="w-full"

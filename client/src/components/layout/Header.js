@@ -3,8 +3,10 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CircleUserRound, HelpCircle } from "lucide-react";
 import HelpModal from "../common/modals/HelpModal";
+import { useAuth } from "../features/auth/AuthProvider";
 
-const Header = ({ user, isGuest, handleLogout }) => {
+const Header = () => {
+  const { user, isGuest, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -47,7 +49,7 @@ const Header = ({ user, isGuest, handleLogout }) => {
                   <button
                     onClick={() => {
                       setDropdownOpen(false);
-                      handleLogout();
+                      logout();
                     }}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
@@ -58,10 +60,7 @@ const Header = ({ user, isGuest, handleLogout }) => {
             </div>
           ) : isGuest ? (
             <button
-              onClick={() => {
-                sessionStorage.removeItem("isGuest");
-                navigate("/login");
-              }}
+              onClick={logout}
               className="text-sm bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700"
             >
               Log In / Sign Up

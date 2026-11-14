@@ -6,8 +6,10 @@ import { supabase } from "../supabaseClient";
 import { StickyHeader, FloatingCreateButton } from "../components";
 import { Pencil } from "lucide-react";
 import { PERSON_TYPE_LABELS } from "../domain";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const Profile = () => {
+  const { user, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [favoriteRestaurants, setFavoriteRestaurants] = useState([]);
   const navigate = useNavigate();
@@ -22,10 +24,9 @@ const Profile = () => {
   };    
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    if (!user) return;
 
+    const fetchProfile = async () => {
       const { data, error } = await supabase
         .from("users")
         .select("username, allergens, favorites, person_type")
@@ -90,7 +91,22 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [user]);
+
+  if (!user) {
+    return (
+      <div className="text-center mt-10">
+        <p className="text-gray-700 mb-4">Sign in to view your profile.</p>
+        <button
+          type="button"
+          onClick={logout}
+          className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700"
+        >
+          Log in
+        </button>
+      </div>
+    );
+  }
 
   if (!profile) {
     return <div className="text-center mt-10">Loading profile...</div>;

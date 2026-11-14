@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const Login = () => {
   //const [user, setUser] = useState(null);
@@ -10,16 +11,13 @@ const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [errorMessage] = useState("");
   const navigate = useNavigate();
+  const { user, loading, continueAsGuest } = useAuth();
+  const signingUp = useRef(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        navigate("/");
-      }
-    };
-    checkUser();
-  }, [navigate]);
+    if (loading || signingUp.current || !user) return;
+    navigate("/");
+  }, [loading, navigate, user]);
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -28,21 +26,23 @@ const Login = () => {
     }
   
     if (isSignUp) {
+      signingUp.current = true;
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
   
       if (signUpError) {
+        signingUp.current = false;
         toast.error(signUpError.message);
         return;
       }
   
-      const user = signUpData.user;
+      const signedUpUser = signUpData.user;
   
-      if (user) {
+      if (signedUpUser) {
         const { error: insertError } = await supabase.from("users").insert({
-          id: user.id,
+          id: signedUpUser.id,
           username: email.split("@")[0],
           allergens: [],
           favorites: [],
@@ -50,11 +50,14 @@ const Login = () => {
         });
   
         if (insertError) {
+          signingUp.current = false;
           toast.error("Error creating user profile: " + insertError.message);
           return;
         }
   
-        window.location.href = "/profile-setup";
+        navigate("/profile-setup");
+      } else {
+        signingUp.current = false;
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
@@ -71,16 +74,12 @@ const Login = () => {
         return;
       }
   
-      window.location.href = "/";
+      navigate("/");
     }
   };
   
   const handleGuestLogin = () => {
-    console.log("Guest login clicked");
-    sessionStorage.setItem("isGuest", "true");
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 150);
+    continueAsGuest();
   };
 
   return (

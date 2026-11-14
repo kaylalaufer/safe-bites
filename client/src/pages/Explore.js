@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { MapComponent, SearchBox, RestaurantCard, FloatingCreateButton } from "../components";
 import { ALLERGENS, RESTAURANT_TYPES, enrichRestaurant, filterRestaurants } from "../domain";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const Explore = () => {
+    const { user } = useAuth();
     const [markers, setMarkers] = useState([]);
     const [selectedAllergens, setSelectedAllergens] = useState([]);
     const [selectedType, setSelectedType] = useState("");
@@ -17,10 +19,9 @@ const Explore = () => {
   
     // Fetch restaurants from Supabase
     useEffect(() => {
+      if (!user) return;
+
       const fetchUserFavorites = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-    
         setUserId(user.id);
     
         const { data, error } = await supabase
@@ -37,7 +38,7 @@ const Explore = () => {
       };
     
       fetchUserFavorites();
-    }, []);
+    }, [user]);
     
     useEffect(() => {
       if (!Array.isArray(favorites)) return;

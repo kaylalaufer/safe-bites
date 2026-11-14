@@ -4,8 +4,10 @@ import { supabase } from "../supabaseClient";
 import { Autocomplete } from "@react-google-maps/api";
 import { useLocation } from "react-router-dom";
 import { ALLERGENS, PERSON_TYPES } from "../domain";
+import { useAuth } from "../components/features/auth/AuthProvider";
 
 const ProfileSetup = () => {
+  const { user, loading } = useAuth();
   const [username, setUsername] = useState("");
   const [selectedAllergens, setSelectedAllergens] = useState([]);
   const [personType, setPersonType] = useState("");
@@ -18,16 +20,13 @@ const ProfileSetup = () => {
 
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-      setUserId(user.id);
-    };
-    fetchUser();
-  }, [navigate]);
+    if (loading) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setUserId(user.id);
+  }, [loading, navigate, user]);
 
   const handlePlaceSelect = () => {
     if (autocomplete) {
