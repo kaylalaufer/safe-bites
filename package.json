@@ -1,5 +1,22 @@
 {
+  "name": "safe-bites",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "cd packages/web && yarn start",
+    "mobile": "cd packages/mobile && yarn start",
+    "build:web": "cd packages/web && yarn build",
+    "build:shared": "cd packages/shared && yarn build",
+    "dev": "concurrently \"yarn web\" \"yarn mobile\"",
+    "install:all": "yarn install && yarn workspaces run install"
+  },
   "dependencies": {
     "firebase": "^12.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

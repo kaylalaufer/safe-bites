@@ -1,0 +1,17 @@
+{
+  "name": "@safe-bites/shared",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "exports": {
+    "./hooks": "./src/hooks/index.js",
+    "./services": "./src/services/index.js",
+    "./constants": "./src/constants/index.js",
+    "./utils": "./src/utils/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
