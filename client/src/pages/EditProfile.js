@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { StickyHeader } from "../components";
+import { ALLERGENS, PERSON_TYPES } from "../domain";
 
 const EditProfile = () => {
     const [profile, setProfile] = useState({
@@ -13,17 +14,6 @@ const EditProfile = () => {
       
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  const ALLERGENS = [
-    "Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"
-  ];
-
-  const PERSON_TYPES = [
-    { value: "adult", label: "Adult with allergies" },
-    { value: "parent", label: "Parent of child with allergies" },
-    { value: "college_student", label: "College student with allergies" },
-    { value: "child", label: "Child with allergies" },
-  ];
 
   useEffect(() => {
     const fetchProfile = async () => {

@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { StickyHeader } from "../components";
+import { RESTAURANT_TYPES, SAFETY_LABELS } from "../domain";
 
 function CreatePost() {
   const location = useLocation();
@@ -397,11 +398,7 @@ function CreatePost() {
 
             >
                 <option value="">Select type</option>
-                {[
-                "Bakery", "Ice Cream", "Boba", "Cafe", "Fast Food", "Diner", 
-                "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", 
-                "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"
-                ].map((type) => (
+                {RESTAURANT_TYPES.map((type) => (
                 <option key={type} value={type}>{type}</option>
                 ))}
                 
@@ -512,9 +509,9 @@ function CreatePost() {
                     className="p-1 border rounded"
                   >
                     <option value="">Select</option>
-                    <option value="safe">Safe</option>
-                    <option value="accommodating">Accommodating</option>
-                    <option value="unsafe">Unsafe</option>
+                    <option value="safe">{SAFETY_LABELS.safe}</option>
+                    <option value="accommodating">{SAFETY_LABELS.accommodating}</option>
+                    <option value="unsafe">{SAFETY_LABELS.unsafe}</option>
                   </select>
                 </div>
               ))}

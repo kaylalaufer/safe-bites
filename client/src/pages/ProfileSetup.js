@@ -3,18 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Autocomplete } from "@react-google-maps/api";
 import { useLocation } from "react-router-dom";
-
-
-const allergenOptions = [
-  "Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"
-];
-
-const PERSON_TYPES = [
-  { value: "adult", label: "Adult with allergies" },
-  { value: "parent", label: "Parent of child with allergies" },
-  { value: "college_student", label: "College student with allergies" },
-  { value: "child", label: "Child with allergies" },
-];
+import { ALLERGENS, PERSON_TYPES } from "../domain";
 
 const ProfileSetup = () => {
   const [username, setUsername] = useState("");
@@ -142,7 +131,7 @@ const ProfileSetup = () => {
 
       <h3 className="font-medium mb-2">Select Allergens:</h3>
       <div className="flex flex-wrap gap-2 mb-4">
-        {allergenOptions.map((allergen) => (
+        {ALLERGENS.map((allergen) => (
           <button
             key={allergen}
             onClick={() => toggleAllergen(allergen)}

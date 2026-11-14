@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { MapComponent, SearchBox, RestaurantCard, FloatingCreateButton } from "../components";
-
-const ALLERGENS = ["Peanut", "Tree Nut", "Gluten", "Wheat", "Eggs", "Milk", "Sesame", "Soy", "Fish", "Shellfish"];
-const RESTAURANT_TYPES = ["Bakery", "Ice Cream", "Boba", "Cafe", "Fast Food", "Diner", "Casual Dining", "Fine Dining", "Vegan", "Vegetarian", "Italian", "Seafood", "Pizza", "BBQ", "Mexican", "Indian", "Asian", "Mediterranean"];
+import { ALLERGENS, RESTAURANT_TYPES, enrichRestaurant, filterRestaurants } from "../domain";
 
 const Explore = () => {
     const [markers, setMarkers] = useState([]);
@@ -68,21 +66,7 @@ const Explore = () => {
           return;
         }
     
-        const enrichedData = data.map((restaurant) => {
-          const allergenSummary = restaurant.restaurant_allergen_summary || [];
-    
-          const totalSafe = allergenSummary.reduce((sum, row) => sum + row.safe_count, 0);
-          const totalAccommodating = allergenSummary.reduce((sum, row) => sum + row.accommodating_count, 0);
-          const totalUnsafe = allergenSummary.reduce((sum, row) => sum + row.unsafe_count, 0);
-    
-          return {
-            ...restaurant,
-            totalSafe,
-            totalAccommodating,
-            totalUnsafe,
-            isFavorited: Array.isArray(favorites) && favorites.includes(restaurant.id),
-          };
-        });
+        const enrichedData = data.map((restaurant) => enrichRestaurant(restaurant, favorites));
     
         const validMarkers = enrichedData.filter((r) => r.lat && r.lng);
     
@@ -107,27 +91,10 @@ const Explore = () => {
       setSelectedAllergens(selectedAllergens.filter((item) => item !== allergen));
     };
 
-    // Filter restaurants based on selected allergens & type
-    const filteredRestaurants = restaurants.filter((restaurant) => {
-      const allergens = restaurant.associated_allergens || [];
-
-      const matchesAllergens =
-        selectedAllergens.length === 0 ||
-        selectedAllergens.every((allergen) => allergens.includes(allergen));
-      
-      const types = restaurant.place_type || [];
-      const matchesType = selectedType === "" || types.includes(selectedType);
-  
-  
-      const withinBounds =
-        !mapBounds ||
-        (restaurant.lat >= mapBounds.south &&
-        restaurant.lat <= mapBounds.north &&
-        restaurant.lng >= mapBounds.west &&
-        restaurant.lng <= mapBounds.east);
-
-      return matchesAllergens && matchesType && withinBounds;
-
+    const filteredRestaurants = filterRestaurants(restaurants, {
+      selectedAllergens,
+      selectedType,
+      mapBounds,
     });
 
 

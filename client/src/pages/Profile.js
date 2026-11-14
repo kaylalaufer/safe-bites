@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { StickyHeader, FloatingCreateButton } from "../components";
 import { Pencil } from "lucide-react";
+import { PERSON_TYPE_LABELS } from "../domain";
 
 const Profile = () => {
   const [profile, setProfile] = useState(null);
@@ -12,15 +13,6 @@ const Profile = () => {
   const navigate = useNavigate();
   const [myReviews, setmyReviews] = useState([]);
   const [openSections, setOpenSections] = useState({});
-
-  const PERSON_TYPE_LABELS = {
-    adult: "Adult with allergies",
-    parent: "Parent of child with allergies",
-    college_student: "College student with allergies",
-    child: "Child with allergies",
-  };
-  
-
 
   const toggleSection = (restaurantId) => {
     setOpenSections((prev) => ({

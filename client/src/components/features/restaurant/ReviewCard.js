@@ -1,11 +1,5 @@
 import React from "react";
-
-const PERSON_TYPE_LABELS = {
-  adult: "Adult with allergies",
-  parent: "Parent of child with allergies",
-  college_student: "College student with allergies",
-  child: "Child with allergies",
-};
+import { PERSON_TYPE_LABELS } from "../../../domain";
 
 const ReviewCard = ({ review }) => {
   const username = review.users?.username || "Anonymous";
