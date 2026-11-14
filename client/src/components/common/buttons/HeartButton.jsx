@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { supabase } from "../../../supabaseClient";
+import { updateFavorite } from "../../../data";
 
 const HeartButton = ({ restaurantId, userId, isFavorited, setFavorites }) => {
   const [localFavorited, setLocalFavorited] = useState(isFavorited);
@@ -11,28 +12,12 @@ const HeartButton = ({ restaurantId, userId, isFavorited, setFavorites }) => {
   }, [isFavorited]);
 
   const toggleFavorite = async () => {
-    const { data, error } = await supabase
-      .from("users")
-      .select("favorites")
-      .eq("id", userId)
-      .single();
+    const { data, error } = await updateFavorite(supabase, userId, restaurantId);
 
     if (error || !data) return;
 
-    const currentFavs = data.favorites || [];
-    const updatedFavs = localFavorited
-      ? currentFavs.filter((id) => id !== restaurantId)
-      : [...currentFavs, restaurantId];
-
-    const { error: updateError } = await supabase
-      .from("users")
-      .update({ favorites: updatedFavs })
-      .eq("id", userId);
-
-    if (!updateError) {
-      setLocalFavorited(!localFavorited);
-      setFavorites?.(updatedFavs); // Update parent state if provided
-    }
+    setLocalFavorited(data.includes(restaurantId));
+    setFavorites?.(data);
   };
 
   if (!userId) return null;

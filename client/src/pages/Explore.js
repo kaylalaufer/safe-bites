@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { MapComponent, SearchBox, RestaurantCard, FloatingCreateButton } from "../components";
 import { ALLERGENS, RESTAURANT_TYPES, enrichRestaurant, filterRestaurants } from "../domain";
+import { listRestaurants } from "../data";
 import { useAuth } from "../components/features/auth/AuthProvider";
 
 const Explore = () => {
@@ -17,7 +18,6 @@ const Explore = () => {
     const [favorites, setFavorites] = useState([]);
     const [userId, setUserId] = useState(null);
   
-    // Fetch restaurants from Supabase
     useEffect(() => {
       if (!user) return;
 
@@ -31,9 +31,9 @@ const Explore = () => {
           .single();
     
         if (!error && data?.favorites) {
-          setFavorites(data.favorites); // trigger second useEffect
+          setFavorites(data.favorites);
         } else {
-          setFavorites([]); // fallback
+          setFavorites([]);
         }
       };
     
@@ -41,42 +41,22 @@ const Explore = () => {
     }, [user]);
     
     useEffect(() => {
-      if (!Array.isArray(favorites)) return;
-    
       const fetchRestaurants = async () => {
-        const { data, error } = await supabase
-          .from("restaurants")
-          .select(`
-            id,
-            name,
-            location,
-            lat,
-            lng,
-            place_type,
-            associated_allergens,
-            restaurant_allergen_summary (
-              allergen,
-              safe_count,
-              accommodating_count,
-              unsafe_count
-            )
-          `);
+        const { data, error } = await listRestaurants(supabase);
     
         if (error) {
           console.error("Error fetching restaurants:", error.message);
           return;
         }
     
-        const enrichedData = data.map((restaurant) => enrichRestaurant(restaurant, favorites));
-    
-        const validMarkers = enrichedData.filter((r) => r.lat && r.lng);
+        const validMarkers = data.filter((restaurant) => restaurant.lat && restaurant.lng);
     
         setMarkers(validMarkers);
-        setRestaurants(enrichedData);
+        setRestaurants(data);
       };
     
       fetchRestaurants();
-    }, [favorites]); // ✅ this will now run only after favorites is loaded
+    }, []);
     
       
     
@@ -92,7 +72,11 @@ const Explore = () => {
       setSelectedAllergens(selectedAllergens.filter((item) => item !== allergen));
     };
 
-    const filteredRestaurants = filterRestaurants(restaurants, {
+    const visibleRestaurants = restaurants.map((restaurant) =>
+      enrichRestaurant(restaurant, favorites)
+    );
+
+    const filteredRestaurants = filterRestaurants(visibleRestaurants, {
       selectedAllergens,
       selectedType,
       mapBounds,
