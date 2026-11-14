@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
@@ -14,28 +14,76 @@ const defaultCenter = {
   lng: -74.0060,
 };
 
-const MapComponent = ({ markers, zoom = 12, onBoundsChange }) => {
+const BOUNDS_SETTLE_MS = 200;
+
+function sameBounds(previous, next) {
+  if (!previous || !next) return false;
+  const close = (left, right) => Math.abs(left - right) < 1e-5;
+  return (
+    close(previous.north, next.north) &&
+    close(previous.south, next.south) &&
+    close(previous.east, next.east) &&
+    close(previous.west, next.west)
+  );
+}
+
+const MapComponent = ({ markers, mapCenter = null, zoom = 12, onBoundsChange }) => {
   const { user } = useAuth();
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [userCenter, setUserCenter] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef(null);
+  const boundsTimer = useRef(null);
+  const lastBounds = useRef(null);
+  const onBoundsChangeRef = useRef(onBoundsChange);
   const navigate = useNavigate();
 
-  const handleBoundsChanged = () => {
-    if (mapRef.current) {
-      const bounds = mapRef.current.getBounds();
-      if (bounds && onBoundsChange) {
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        onBoundsChange({
-          north: ne.lat(),
-          east: ne.lng(),
-          south: sw.lat(),
-          west: sw.lng(),
-        });
-      }
-    }
-  };
+  onBoundsChangeRef.current = onBoundsChange;
+
+  const publishSettledBounds = useCallback(() => {
+    if (boundsTimer.current) clearTimeout(boundsTimer.current);
+
+    boundsTimer.current = setTimeout(() => {
+      const map = mapRef.current;
+      const notify = onBoundsChangeRef.current;
+      if (!map || !notify) return;
+
+      const bounds = map.getBounds();
+      if (!bounds) return;
+
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+      const next = {
+        north: ne.lat(),
+        east: ne.lng(),
+        south: sw.lat(),
+        west: sw.lng(),
+      };
+
+      if (sameBounds(lastBounds.current, next)) return;
+      lastBounds.current = next;
+      notify(next);
+    }, BOUNDS_SETTLE_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (boundsTimer.current) clearTimeout(boundsTimer.current);
+    };
+  }, []);
+
+  // Search supplies a center. Saved-home centering stays in place until then,
+  // and a later search still zooms even when the zoom number did not change.
+  useEffect(() => {
+    if (!mapReady || !mapCenter || !mapRef.current) return;
+    mapRef.current.panTo(mapCenter);
+    mapRef.current.setZoom(zoom);
+  }, [mapReady, mapCenter, zoom]);
+
+  const handleLoad = useCallback((map) => {
+    mapRef.current = map;
+    setMapReady(true);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -58,13 +106,15 @@ const MapComponent = ({ markers, zoom = 12, onBoundsChange }) => {
     fetchUserLocation();
   }, [user]);
 
+  const center = mapCenter || userCenter || defaultCenter;
+
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={userCenter || defaultCenter}
+      center={center}
       zoom={zoom}
-      onLoad={(map) => (mapRef.current = map)}
-      onBoundsChanged={handleBoundsChanged}
+      onLoad={handleLoad}
+      onIdle={publishSettledBounds}
     >
       {markers.map((marker, index) => (
         <Marker

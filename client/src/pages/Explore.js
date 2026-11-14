@@ -11,7 +11,8 @@ const Explore = () => {
     const [selectedAllergens, setSelectedAllergens] = useState([]);
     const [selectedType, setSelectedType] = useState("");
     const [restaurants, setRestaurants] = useState([]);
-    const [mapCenter, setMapCenter] = useState({ lat: 40.7128, lng: -74.006 });
+    // Null until a search sets the camera, so saved-home centering still wins.
+    const [mapCenter, setMapCenter] = useState(null);
     const [zoom, setZoom] = useState(12);
     const [mapBounds, setMapBounds] = useState(null);
     const [searchPlace, setSearchPlace] = useState(null);
