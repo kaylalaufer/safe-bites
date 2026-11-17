@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { Autocomplete } from "@react-google-maps/api";
 import { supabase } from "../supabaseClient";
-import { useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { StickyHeader } from "../components";
-import { RESTAURANT_TYPES, SAFETY_LABELS, canPostReview } from "../domain";
+import { RESTAURANT_TYPES, SAFETY_LABELS, buildAllergenFeedback, canPostReview } from "../domain";
+import { submitReview } from "../data";
 import { useAuth } from "../components/features/auth/AuthProvider";
 
 function CreatePost() {
@@ -17,9 +17,6 @@ function CreatePost() {
   const prefillName = params.get("name") || "";
   const prefillLocation = params.get("location") || "";
   const prefillType = params.get("place_type") || "";
-  
-  console.log(prefillType)
-  console.log(Array.isArray(prefillType))
 
   const [formData, setFormData] = useState({
     restaurant: "" || prefillName,
@@ -34,8 +31,6 @@ function CreatePost() {
     lat: null,
     lng: null,
   });
-
-  console.log("Form Data:", formData);
 
   const { user, isGuest } = useAuth();
 
@@ -91,19 +86,7 @@ function CreatePost() {
               const lat = place.geometry?.location?.lat();
               const lng = place.geometry?.location?.lng();
               const placeId = place.place_id;
-              //const rawType = place.types?.[0] || "";
-  
-              /*const typeMapping = {
-                cafe: "Cafe",
-                bakery: "Bakery",
-                restaurant: "Casual Dining",
-                meal_delivery: "Fast Food",
-                meal_takeaway: "Fast Food",
-                ice_cream_shop: "Ice Cream",
-              };*/
-              
-              //const mappedType = typeMapping[rawType] || "";
-  
+
               setFormData((prev) => ({
                 ...prev,
                 restaurant: prefillName,
@@ -174,173 +157,52 @@ function CreatePost() {
       return;
     }
   
-    // Build allergen_feedback array
-    let allergen_feedback = [];
-    if (
-      formData.experience === "safe" ||
-      allAllergensAffected === "yes" ||
-      allAllergensAffected === "unsure"
-    ) {
-      allergen_feedback = userAllergens.map((a) => ({
-        allergen: a,
-        category: formData.experience,
-      }));
-    } else if (allAllergensAffected === "no") {
-      allergen_feedback = Object.entries(customAllergenFeedback).map(
-        ([allergen, category]) => ({ allergen, category })
-      );
-    }
-  
-    try {
-      // 1. Check if restaurant exists
-      const { data: existingRestaurant, error } = await supabase
-        .from("restaurants")
-        .select("id, hidden_allergens, associated_allergens, place_type")        
-        .eq("name", formData.restaurant)
-        .eq("location", formData.location)
-        .eq("google_place_id", formData.google_place_id)
-        .maybeSingle();
+    const allergen_feedback = buildAllergenFeedback({
+      experience: formData.experience,
+      allAllergensAffected,
+      userAllergens,
+      customAllergenFeedback,
+    });
 
-      if (error) {
-        console.error("Select restaurant failed:", error.message);
-        //throw error;
-      }
-  
-      let restaurantId;
-  
-      if (existingRestaurant) {
-        console.log("Restaurant already exists:", existingRestaurant);
-        restaurantId = existingRestaurant.id;
-  
-        // 2. Append hidden allergens if needed
-        if (formData.hidden_allergens) {
-          const current = existingRestaurant.hidden_allergens || [];
-          if (!current.includes(formData.hidden_allergens)) {
-            await supabase
-              .from("restaurants")
-              .update({
-                hidden_allergens: [...current, formData.hidden_allergens],
-              })
-              .eq("id", restaurantId);
-          }
-        }
-  
-        // 3. Append associated allergens
-        const existingAssociated = existingRestaurant.associated_allergens || [];
-        console.log("Existing associated allergens:", existingAssociated);
-        const mergedAllergens = Array.from(
-          new Set([...existingAssociated, ...profile.allergens])
-        );
+    const { data, error, summaryError } = await submitReview(supabase, {
+      name: formData.restaurant,
+      location: formData.location,
+      place_type: formData.place_type,
+      google_place_id: formData.google_place_id,
+      hidden_allergens: formData.hidden_allergens,
+      associated_allergens: profile.allergens || [],
+      lat: formData.lat,
+      lng: formData.lng,
+      userId: user.id,
+      allergen_feedback,
+      review_text: formData.review,
+    });
 
-        await supabase
-          .from("restaurants")
-          .update({ associated_allergens: mergedAllergens })
-          .eq("id", restaurantId);
-
-        // 4. Append new place_type if not already in the array
-        const currentTypes = existingRestaurant.place_type || [];
-        console.log("Current types:", currentTypes);
-        const newType = Array.isArray(formData.place_type)
-          ? formData.place_type[0]
-          : formData.place_type;
-
-        if (newType && !currentTypes.includes(newType)) {
-          const updatedTypes = Array.from(new Set([...currentTypes, newType]));
-          console.log("Updated type arrary",updatedTypes)
-          await supabase
-            .from("restaurants")
-            .update({
-              place_type: updatedTypes,
-            })
-            .eq("id", restaurantId);
-        }
-
-      } else {
-        // 4. Insert new restaurant
-        console.log("Inserting new restaurant:", formData);
-        const { data: newRestaurant, error: insertError } = await supabase
-          .from("restaurants")
-          .insert([
-            {
-              name: formData.restaurant,
-              location: formData.location,
-              place_type: formData.place_type ? [formData.place_type] : [],
-              google_place_id: formData.google_place_id,
-              hidden_allergens: formData.hidden_allergens
-                ? [formData.hidden_allergens]
-                : [],
-              associated_allergens: profile.allergens,
-              lat: formData.lat,
-              lng: formData.lng,
-            },
-          ])
-          .select()
-          .single();
-  
-        if (insertError) throw insertError;
-        restaurantId = newRestaurant.id;
-      }
-  
-      // 5. Insert review
-      console.log("Inserting review:")
-      const { error: reviewError } = await supabase.from("reviews").insert([
-        {
-          user_id: user.id,
-          restaurant_id: restaurantId,
-          allergen_feedback,
-          review_text: formData.review,
-        },
-      ]);
-  
-      if (reviewError) throw reviewError;
-  
-      toast.success("Review posted! 🎉");
-      navigate(`/restaurant/${restaurantId}`);
-
-      // Increment the appropriate safety count
-      const safetyCounts = {
-        safe: 0,
-        accommodating: 0,
-        unsafe: 0,
-      };
-      
-      allergen_feedback.forEach(({ category }) => {
-        if (safetyCounts[category] !== undefined) {
-          safetyCounts[category]++;
-        }
-      });
-      
-      // Update each count using Supabase RPC
-      for (const { allergen, category } of allergen_feedback) {
-        const column = `${category}_count`;
-      
-        const { error } = await supabase.rpc("increment_allergen_summary", {
-          rest_id: restaurantId,
-          allergen_name: allergen,
-          column_name: column,
-        });
-      
-        if (error) console.error("Error updating allergen summary:", error);
-      }      
-
-  
-      // 6. Reset form
-      setFormData({
-        restaurant: "",
-        location: "",
-        place_type: "",
-        hidden_allergens: "",
-        allergens: [],
-        experience: "",
-        user: "",
-        review: "",
-      });
-      setAllAllergensAffected("yes");
-      setCustomAllergenFeedback({});
-    } catch (error) {
-      console.error("❌ Error submitting review:", error);
+    if (error) {
       toast.error("Failed to post review.");
+      return;
     }
+
+    if (summaryError) {
+      toast.error("Review posted, but the allergen summary could not be updated.");
+    } else {
+      toast.success("Review posted! 🎉");
+    }
+
+    navigate(`/restaurant/${data.restaurantId}`);
+
+    setFormData({
+      restaurant: "",
+      location: "",
+      place_type: "",
+      hidden_allergens: "",
+      allergens: [],
+      experience: "",
+      user: "",
+      review: "",
+    });
+    setAllAllergensAffected("yes");
+    setCustomAllergenFeedback({});
   };  
 
   return (
