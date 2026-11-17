@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { nextFavorites } from "../domain";
-import { listRestaurants, updateFavorite } from "./index";
+import { listRestaurants, updateFavorite, updateProfile } from "./index";
 
 describe("data modules stay free of web imports", () => {
   const files = ["restaurants.js", "users.js", "index.js"];
@@ -133,5 +133,67 @@ describe("updateFavorite", () => {
 
     expect(result).toEqual({ data: expected, error: null });
     expect(client.calls.updates).toEqual([{ favorites: expected }]);
+  });
+});
+
+function profileClient(updateResult) {
+  const calls = { updates: [], ids: [] };
+
+  return {
+    calls,
+    from(table) {
+      if (table !== "users") {
+        throw new Error(`Unexpected table ${table}`);
+      }
+
+      return {
+        update(payload) {
+          calls.updates.push(payload);
+          return {
+            eq(_column, id) {
+              calls.ids.push(id);
+              return Promise.resolve(updateResult);
+            },
+          };
+        },
+      };
+    },
+  };
+}
+
+describe("updateProfile", () => {
+  const payload = {
+    id: "user-1",
+    username: "kayla",
+    allergens: ["Peanut"],
+    person_type: "adult",
+    favorites: ["r1"],
+    location: "New York",
+    lat: 40.7,
+    lng: -74,
+  };
+
+  test("writes only username, allergens, and person_type", async () => {
+    const client = profileClient({ error: null });
+
+    const result = await updateProfile(client, "user-1", payload);
+
+    expect(client.calls.updates).toEqual([
+      { username: "kayla", allergens: ["Peanut"], person_type: "adult" },
+    ]);
+    expect(client.calls.ids).toEqual(["user-1"]);
+    expect(result).toEqual({
+      data: { username: "kayla", allergens: ["Peanut"], person_type: "adult" },
+      error: null,
+    });
+  });
+
+  test("returns a null result and the error when the update fails", async () => {
+    const error = { message: "write failed" };
+    const client = profileClient({ error });
+
+    const result = await updateProfile(client, "user-1", payload);
+
+    expect(result).toEqual({ data: null, error });
   });
 });

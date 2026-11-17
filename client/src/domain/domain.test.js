@@ -321,6 +321,12 @@ describe("validateProfile", () => {
       message: "Please select your location from the suggestions.",
     });
   });
+
+  test("skips the location check when the form does not edit it", () => {
+    expect(
+      validateProfile({ username: "kayla", personType: "adult", requireLocation: false })
+    ).toEqual({ ok: true, message: "" });
+  });
 });
 
 describe("canPostReview", () => {

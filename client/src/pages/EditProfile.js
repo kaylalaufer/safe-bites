@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { StickyHeader } from "../components";
-import { ALLERGENS, PERSON_TYPES } from "../domain";
+import { AllergenPicker, PersonTypeField, StickyHeader } from "../components";
+import { pickProfileUpdate, validateProfile } from "../domain";
+import { updateProfile } from "../data";
 import { useAuth } from "../components/features/auth/AuthProvider";
 
 const EditProfile = () => {
@@ -27,7 +28,7 @@ const EditProfile = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("users")
-        .select("*")
+        .select("username, allergens, person_type")
         .eq("id", user.id)
         .single();
 
@@ -48,9 +49,9 @@ const EditProfile = () => {
   const toggleAllergen = (allergen) => {
     setProfile((prev) => ({
       ...prev,
-      allergens: prev.allergens.includes(allergen)
+      allergens: (prev.allergens || []).includes(allergen)
         ? prev.allergens.filter((a) => a !== allergen)
-        : [...prev.allergens, allergen],
+        : [...(prev.allergens || []), allergen],
     }));
   };
 
@@ -58,16 +59,22 @@ const EditProfile = () => {
     e.preventDefault();
     if (!user) return;
 
-    if (!profile.username.trim()) {
-      toast.error("Username is required.");
+    const validation = validateProfile({
+      username: profile.username,
+      personType: profile.person_type,
+      requireLocation: false,
+    });
+
+    if (!validation.ok) {
+      toast.error(validation.message);
       return;
     }
 
-
-    const { error } = await supabase
-        .from("users")
-        .update(profile)
-        .eq("id", user.id);
+    const { error } = await updateProfile(
+      supabase,
+      user.id,
+      pickProfileUpdate(profile)
+    );
 
     if (error) {
       toast.error("Failed to update profile.");
@@ -109,42 +116,17 @@ const EditProfile = () => {
           required
         />
 
-        <div>
-          <label className="font-semibold block mb-1">Allergy Type *</label>
-            <select
-                name="person_type"
-                value={profile.person_type || ""}
-                onChange={(e) => setProfile(prev => ({ ...prev, person_type: e.target.value }))}
-                className="w-full p-2 border rounded"
-                >
-                <option value="">Select Type</option>
-                {PERSON_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                    {type.label}
-                    </option>
-                ))}
-            </select>
-        </div>
+        <PersonTypeField
+          value={profile.person_type || ""}
+          onChange={(personType) =>
+            setProfile((prev) => ({ ...prev, person_type: personType }))
+          }
+        />
 
-        <div>
-          <label className="font-semibold block mb-1">Allergens</label>
-          <div className="flex flex-wrap gap-2">
-            {ALLERGENS.map((a) => (
-              <button
-                key={a}
-                type="button"
-                className={`px-3 py-1 rounded-full border ${
-                  profile.allergens?.includes(a)
-                    ? "bg-pink-300 text-white"
-                    : "bg-gray-100"
-                }`}
-                onClick={() => toggleAllergen(a)}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AllergenPicker
+          selected={profile.allergens || []}
+          onToggle={toggleAllergen}
+        />
 
         <button type="submit" className="w-full bg-pink-600 text-white py-2 rounded hover:bg-pink-700">
           Save Changes

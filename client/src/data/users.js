@@ -1,4 +1,4 @@
-import { nextFavorites } from "../domain";
+import { nextFavorites, pickProfileUpdate } from "../domain";
 
 /**
  * Read-modify-write of users.favorites.
@@ -28,4 +28,16 @@ export async function updateFavorite(supabase, userId, restaurantId) {
   if (updateError) return { data: null, error: updateError };
 
   return { data: next, error: null };
+}
+
+/**
+ * Writes the fields the profile forms edit.
+ * favorites, location, and coordinates stay as they are in the row.
+ */
+export async function updateProfile(supabase, id, payload) {
+  const update = pickProfileUpdate(payload);
+  const { error } = await supabase.from("users").update(update).eq("id", id);
+
+  if (error) return { data: null, error };
+  return { data: update, error: null };
 }

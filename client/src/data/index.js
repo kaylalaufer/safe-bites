@@ -1,2 +1,2 @@
 export { listRestaurants } from "./restaurants";
-export { updateFavorite } from "./users";
+export { updateFavorite, updateProfile } from "./users";

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { Autocomplete } from "@react-google-maps/api";
-import { useLocation } from "react-router-dom";
-import { ALLERGENS, PERSON_TYPES } from "../domain";
+import { toast } from "react-toastify";
+import { pickProfileUpdate, validateProfile } from "../domain";
+import { AllergenPicker, PersonTypeField } from "../components";
 import { useAuth } from "../components/features/auth/AuthProvider";
 
 const ProfileSetup = () => {
@@ -41,19 +42,16 @@ const ProfileSetup = () => {
   };
 
   const handleSubmit = async () => {
+    const validation = validateProfile({
+      username,
+      personType,
+      location,
+      lat: latLng.lat,
+      lng: latLng.lng,
+    });
 
-    if (!username.trim()) {
-      alert("Username is required.");
-      return;
-    }
-    
-    if (!personType.trim()) {
-      alert("Please select your allergy type.");
-      return;
-    }
-
-    if (!location || latLng.lat == null || latLng.lng == null) {
-      alert("Please select your location from the suggestions.");
+    if (!validation.ok) {
+      toast.error(validation.message);
       return;
     }
 
@@ -64,29 +62,28 @@ const ProfileSetup = () => {
       .single();
 
     if (fetchError && fetchError.code !== "PGRST116") {
-      alert("Error checking existing user: " + fetchError.message);
+      toast.error("Error checking existing user: " + fetchError.message);
       return;
     }
 
-    const updateData = {
-      id: userId,
-      username,
-      allergens: selectedAllergens,
-      person_type: personType,
+    // Location stays on this page. updateProfile does not write it.
+    const profileFields = {
+      ...pickProfileUpdate({
+        username,
+        allergens: selectedAllergens,
+        person_type: personType,
+      }),
       location,
       lat: latLng.lat,
       lng: latLng.lng,
     };
 
-    let result;
-    if (!existingUser) {
-      result = await supabase.from("users").insert(updateData);
-    } else {
-      result = await supabase.from("users").update(updateData).eq("id", userId);
-    }
+    const result = existingUser
+      ? await supabase.from("users").update(profileFields).eq("id", userId)
+      : await supabase.from("users").insert({ id: userId, ...profileFields });
 
     if (result.error) {
-      alert("Error saving profile: " + result.error.message);
+      toast.error("Error saving profile: " + result.error.message);
     } else {
       navigate("/");
     }
@@ -128,37 +125,11 @@ const ProfileSetup = () => {
         />
       </Autocomplete>
 
-      <h3 className="font-medium mb-2">Select Allergens:</h3>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {ALLERGENS.map((allergen) => (
-          <button
-            key={allergen}
-            onClick={() => toggleAllergen(allergen)}
-            className={`px-3 py-1 rounded-full border ${
-              selectedAllergens.includes(allergen)
-                ? "bg-pink-600 text-white"
-                : "bg-white text-gray-700"
-            }`}
-          >
-            {allergen}
-          </button>
-        ))}
+      <div className="mb-4">
+        <AllergenPicker selected={selectedAllergens} onToggle={toggleAllergen} />
       </div>
 
-      <h3 className="font-medium mb-2">I am a(n): *</h3>
-        <select
-          name="person_type"
-          value={personType}
-          onChange={(e) => setPersonType(e.target.value)}
-          className="w-full p-2 border rounded"
-        >
-          <option value="">Select Type</option>
-          {PERSON_TYPES.map((type) => (
-            <option key={type.value} value={type.value}>
-              {type.label}
-            </option>
-          ))}
-        </select>
+      <PersonTypeField value={personType} onChange={setPersonType} />
       <button
         className="bg-pink-600 text-white px-4 py-2 rounded w-full mt-6"
         onClick={handleSubmit}

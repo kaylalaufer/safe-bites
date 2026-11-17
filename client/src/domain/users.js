@@ -1,4 +1,11 @@
-export function validateProfile({ username, personType, location, lat, lng } = {}) {
+export function validateProfile({
+  username,
+  personType,
+  location,
+  lat,
+  lng,
+  requireLocation = true,
+} = {}) {
   if (username == null || String(username).trim() === "") {
     return { ok: false, message: "Username is required." };
   }
@@ -7,7 +14,8 @@ export function validateProfile({ username, personType, location, lat, lng } = {
     return { ok: false, message: "Please select your allergy type." };
   }
 
-  if (!location || lat == null || lng == null) {
+  // Setup collects a place. Edit does not, so it can skip this check.
+  if (requireLocation && (!location || lat == null || lng == null)) {
     return { ok: false, message: "Please select your location from the suggestions." };
   }
 
