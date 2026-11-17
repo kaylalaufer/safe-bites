@@ -9,7 +9,7 @@ const StickyHeader = ({ title = "Back" }) => {
     if (window.history.length > 2) {
       navigate(-1);
     } else {
-      navigate("/explore");
+      navigate("/");
     }
   };
 

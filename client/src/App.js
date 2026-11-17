@@ -13,7 +13,6 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 
 import AuthWrapper from "./components/features/auth/AuthWrapper";
-import TestDataInsert from "./components/features/profile/TestDataInsert";
 import ProfileCheckWrapper from "./components/features/auth/ProfileCheckWrapper";
 import { AuthProvider, useAuth } from "./components/features/auth/AuthProvider";
 import Header from "./components/layout/Header";
@@ -54,7 +53,6 @@ function AppShell() {
               }
             />
             <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/test-insert" element={<TestDataInsert />} />
 
             <Route
               path="/"

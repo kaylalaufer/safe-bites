@@ -97,7 +97,6 @@ const MapComponent = ({ markers, mapCenter = null, zoom = 12, onBoundsChange }) 
 
       if (!error && data?.lat && data?.lng) {
         setUserCenter({ lat: data.lat, lng: data.lng });
-        console.log("User location fetched successfully", data);
       } else {
         console.error("Failed to fetch user location", error);
       }

@@ -112,7 +112,6 @@ const Explore = () => {
 
                           // Step 4: Add temporary marker if not in DB
                           if (!match && !error) {
-                            console.log("Place not found in DB, adding temporary marker");
                             const tempMarker = {
                               id: "new", // Temporary ID
                               name: place.name,
@@ -122,7 +121,6 @@ const Explore = () => {
                               place_type: [], // Optional default
                               isNew: true,
                             };
-                            console.log("Adding temporary marker:", tempMarker);
                             setMarkers((prev) => [...prev, tempMarker]);
                             const exists = restaurants.some(r => r.id === "new");
                             if (!exists) {
